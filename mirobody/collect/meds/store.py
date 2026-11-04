@@ -485,6 +485,17 @@ class PostgresDoseLogStore:
             log_sql=False,
         )
 
+    async def retract(self, subject_id: str, event_id: str) -> bool:
+        """Take an answer back (an undo): the slot is what the clock says
+        again. Soft, like every other delete here; only the subject's own
+        event, so an id from someone else's log retracts nothing."""
+        result = await execute_query(
+            "UPDATE th_dose_event SET deleted = 1 WHERE event_id = :event_id AND user_id = :uid AND deleted = 0",
+            {"event_id": event_id, "uid": str(subject_id)},
+            log_sql=False,
+        )
+        return bool(result.get("record_count")) if isinstance(result, dict) else False
+
 
 class PostgresOverlayStore:
     """The correction layer (`th_override`), append-only.

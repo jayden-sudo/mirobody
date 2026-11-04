@@ -93,6 +93,7 @@ _SERVER_ONLY = [
     "tests/mcp/**/*",
     "tests/utils/test_db.py",
     "mirobody/tests/test_sibian_auth.py",
+    "mirobody/tests/test_dose_today.py",
 ]
 
 # Tests that import the [parse] layer, directly or through their parent

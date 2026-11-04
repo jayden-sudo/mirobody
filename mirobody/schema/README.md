@@ -6,7 +6,7 @@ at boot:
 | File | Domain |
 | --- | --- |
 | `00_prolog.sql` | extensions; the encryption functions every other file relies on |
-| `10_accounts.sql` | the account, passkeys, the generated profile, care circles (and the one-way migration from the tables they replaced) |
+| `10_accounts.sql` | the account, identities proven elsewhere (sibian-os), passkeys, the generated profile, care circles (and the one-way migration from the tables they replaced) |
 | `20_files.sql` | uploaded documents |
 | `30_observations.sql` | every reading as one row of `th_observation`, its coding beside it; the legacy genotype table |
 | `31_medications.sql` | medications as an entity: plan, course, dose event, override |

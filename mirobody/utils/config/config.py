@@ -558,6 +558,19 @@ class Config:
             "webauthn_mfa_ticket_ttl"   : self.get_int("WEBAUTHN_MFA_TICKET_TTL", 300),
         }
 
+    def get_sign_in_options(self) -> dict:
+        """Which sign-in routes the server mounts, and the sibian nodes it
+        trusts. Only the SHAPE is normalised here (a YAML list or mapping, or
+        the comma-separated or JSON text an environment variable holds); what
+        counts as a trustworthy node is `user.auth.sibian.issuers_from_config`,
+        which the server applies."""
+        return {
+            "auth_methods"          : _names(self.get("AUTH_METHODS")) or ["email", "password"],
+            "sibian_issuers"        : _list_or_mapping(self.get("SIBIAN_ISSUERS")),
+            "sibian_audience"       : self.get_str("SIBIAN_AUDIENCE") or "mirobody",
+            "sibian_session_seconds": self.get_int("SIBIAN_SESSION_SECONDS", 3600),
+        }
+
     def get_postgresql(self, key: str="") -> "PostgreSQLConfig":
         # Imported here, not at module scope. `mirobody.utils.config` is on the
         # import path of the whole ENGINE (`mirobody.engine`, `indicator`,
@@ -847,3 +860,31 @@ def get_default_timezone() -> str:
     return tz if tz else "America/Los_Angeles"
 
 #-----------------------------------------------------------------------------
+
+
+#-----------------------------------------------------------------------------
+
+def _list_or_mapping(value: Any) -> list | dict:
+    """A list or mapping as YAML gives it, or as an environment string: JSON,
+    or comma-separated names."""
+    if isinstance(value, list | dict):
+        return value
+    if isinstance(value, str | bytes | bytearray):
+        text = value.decode() if isinstance(value, bytes | bytearray) else value
+        text = text.strip()
+        if not text:
+            return []
+        if text[0] in "[{":
+            try:
+                parsed = json.loads(text)
+            except ValueError:
+                raise ValueError("a setting that looks like JSON does not parse") from None
+            if isinstance(parsed, list | dict):
+                return parsed
+        return [part.strip() for part in text.split(",") if part.strip()]
+    return [] if value is None else value
+
+
+def _names(value: Any) -> list[str]:
+    shaped = _list_or_mapping(value)
+    return [str(v).strip().lower() for v in shaped if str(v).strip()] if isinstance(shaped, list) else []

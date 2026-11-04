@@ -1,6 +1,7 @@
 -- 10_accounts.sql: who a person is, how they sign in, who may see their record.
 --
 --   health_app_user                 the account
+--   external_identity               an identity proven elsewhere (sibian-os) and its account
 --   webauthn_credentials            passkeys for AAL2
 --   health_user_profile_by_system   the generated health profile, versioned
 --   care_circles / care_circle_members   the sharing model and the one
@@ -61,6 +62,23 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_uni_health_app_user_apple_sub_active ON he
 COMMENT ON COLUMN health_app_user.gender IS 'Gender: 0-Unknown 1-Male 2-Female';
 COMMENT ON COLUMN health_app_user.password_hash IS
     'bcrypt via pgcrypto crypt()/gen_salt(bf,12); NULL = no password set';
+
+-- An identity proven somewhere else, and the account it signs in to.
+-- `provider` 'sibian' is a sibian-os identity number, vouched for by one of the
+-- nodes in SIBIAN_ISSUERS (user/auth/sibian.py). The same person arriving
+-- through another node is the same row: `first_iss` only records where they
+-- came from first. A row whose account was deleted is pointed at a new account
+-- on the next sign-in (user.ensure_sibian_user); the deleted one never returns.
+CREATE TABLE IF NOT EXISTS external_identity (
+    provider    VARCHAR(32)  NOT NULL,
+    subject     VARCHAR(255) NOT NULL,
+    user_id     INTEGER      NOT NULL REFERENCES health_app_user(id),
+    first_iss   VARCHAR(255) NOT NULL DEFAULT '',
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    last_seen   TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    PRIMARY KEY (provider, subject)
+);
+CREATE INDEX IF NOT EXISTS idx_external_identity_user ON external_identity (user_id);
 
 -- Passkeys. One credential id across all users; a deleted one keeps its row.
 CREATE TABLE IF NOT EXISTS webauthn_credentials (

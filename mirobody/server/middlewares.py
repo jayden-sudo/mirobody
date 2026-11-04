@@ -72,11 +72,20 @@ SECURITY_HEADERS = {
     "Referrer-Policy": "same-origin",
 }
 
+#: The caching a response gets when it chose none. Almost every answer here is
+#: one person's record, and a CDN or proxy in front of the server (a
+#: deployment behind Cloudflare, say) caches by URL and file extension when
+#: told nothing: `/files/<key>.pdf` looks like a static file. A default rather
+#: than a rule: the web client's assets (`htdoc.py`) and SSE streams
+#: (`utils/sse.py`) set their own, and keep them.
+DEFAULT_CACHE_CONTROL = "private, no-store"
+
 #-----------------------------------------------------------------------------
 
 class ResponseHeadersMiddleware:
     """The outermost middleware: every HTTP response carries `SECURITY_HEADERS`
-    and the request's `X-Request-Id`.
+    and the request's `X-Request-Id`, and `DEFAULT_CACHE_CONTROL` unless it
+    set a `Cache-Control` of its own.
 
     Pure ASGI, so it sees what the JWT middleware, which used to add them,
     never did: a CORS preflight, an unhandled 500, every response of a server
@@ -98,7 +107,8 @@ class ResponseHeadersMiddleware:
         async def stamped(message: Message) -> None:
             if message["type"] == "http.response.start":
                 headers = MutableHeaders(scope=message)
-                for name, value in {**SECURITY_HEADERS, TRACE_HEADER: trace_id}.items():
+                for name, value in {**SECURITY_HEADERS, TRACE_HEADER: trace_id,
+                                    "Cache-Control": DEFAULT_CACHE_CONTROL}.items():
                     headers.setdefault(name, value)
             await send(message)
 

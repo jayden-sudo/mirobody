@@ -14,6 +14,7 @@ from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
+from .htdoc import _CacheControl
 from .middlewares import (
     JwtMiddleware,
     RequestRateLimiterMiddleware,
@@ -40,6 +41,15 @@ def _listed(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def cors_origins(http_headers: list[tuple[str, str]] | None) -> list[str]:
+    """The origins `Access-Control-Allow-Origin` names: one, or several
+    separated by commas. The one reading of that setting: the CORS layer and
+    the OAuth return-origin check (`public_router._return_origins`) both use
+    it, so a list cannot mean a list in one place and a single origin in the
+    other."""
+    return _listed(dict(http_headers or []).get("Access-Control-Allow-Origin", ""))
+
+
 def build_middlewares(
     *,
     http_headers: list[tuple[str, str]] | None = None,
@@ -57,6 +67,9 @@ def build_middlewares(
         # First, so its headers reach every response, the ones the layers
         # below answer on their own included.
         Middleware(ResponseHeadersMiddleware),
+        # Inside it: the web client's cache headers are set first, and the
+        # `no-store` default above only fills in what is still unset.
+        Middleware(_CacheControl),
         Middleware(GZipMiddleware,
                    minimum_size=10_000),
     ]
@@ -71,14 +84,19 @@ def build_middlewares(
     # "Server" header, so the list is never empty (introduced in 06e1ad9).
     cors_headers = dict(http_headers) if http_headers else {}
     if cors_headers:
-        allowed_origin = cors_headers.get("Access-Control-Allow-Origin", "")
         allowed_methods = cors_headers.get("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         allowed_headers = cors_headers.get("Access-Control-Allow-Headers", "Authorization, Content-Type")
         allow_credentials = cors_headers.get("Access-Control-Allow-Credentials", "false").lower() == "true"
         max_age = int(cors_headers.get("Access-Control-Max-Age", "600"))
 
+        # Several origins, comma-separated: one deployment serves the pages of
+        # more than one site (each sibian-os city has its own domain). The
+        # browser still receives one origin, the caller's, which
+        # `CORSMiddleware` echoes when it is on the list.
+        allowed_origins = cors_origins(http_headers)
+
         # Warn if wildcard origin is used with credentials (invalid per CORS spec).
-        if allowed_origin == "*" and allow_credentials:
+        if "*" in allowed_origins and allow_credentials:
             # NOTE: no `import logging` in this function. A function-local import
             # rebinds the name for the whole function: one here made a
             # `logger.info(...)` above it raise UnboundLocalError and took the
@@ -91,7 +109,7 @@ def build_middlewares(
 
         middlewares.append(
             Middleware(CORSMiddleware,
-                       allow_origins=[allowed_origin] if allowed_origin else [],
+                       allow_origins=allowed_origins,
                        allow_methods=_listed(allowed_methods),
                        allow_headers=_listed(allowed_headers),
                        allow_credentials=allow_credentials,

@@ -55,6 +55,8 @@ HTTP_ROOT: frontend
 # WEBAUTHN_RP_NAME: Mirobody
 
 # HTTP_HEADERS:
+#   # One origin, or several separated by commas (each site whose pages call
+#   # this API, e.g. every sibian-os city's domain); the caller's is echoed.
 #   Access-Control-Allow-Origin: 'http://localhost:18080'  # CHANGE FOR PRODUCTION
 #   Access-Control-Allow-Credentials: 'true'
 #   Access-Control-Allow-Methods: 'GET, POST, PUT, DELETE, OPTIONS'
@@ -143,6 +145,22 @@ JWT_SCOPE: "mcp:read mcp:write"
 # JWT_PRIVATE_KEY: 'REPLACE_THIS_VALUE_IN_PRODUCTION'
 
 # Google / Apple sign-in and the mobile clients' settings: config.devices.yaml.
+
+# Which sign-in routes exist: `email` (emailed code), `password`, `sibian`.
+# Unset: [email, password], as before. A deployment whose people arrive from
+# sibian-os lists only sibian, and the other routes are not mounted.
+# AUTH_METHODS: [sibian]
+#
+# The sibian-os nodes trusted to vouch for their people
+# (`POST /auth/sibian/exchange`). Each is https, and publishes its signing keys
+# at /.well-known/sibian-health/jwks.json; a mapping {node: jwks_url} names
+# another address. In .env: comma-separated, or JSON.
+# SIBIAN_ISSUERS: ['https://sibian-os.exe.xyz', 'https://localfirst-city.exe.xyz']
+# The `aud` the nodes put in their assertions (default mirobody), and how long
+# the session an exchange returns lasts, in seconds (default 3600; there is no
+# refresh token: the page exchanges a fresh assertion).
+# SIBIAN_AUDIENCE: mirobody
+# SIBIAN_SESSION_SECONDS: 3600
 
 #-----------------------------------------------------------------------------
 # How long a personal MCP link stays valid, in days from when it is made

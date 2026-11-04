@@ -21,9 +21,10 @@ name, language, timezone and all. :func:`get_user` is the single lookup;
 from __future__ import annotations
 
 import logging
+import secrets
 
 from datetime import date, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 # Type-checking only: `AsyncConnectionPool` appears in two parameter
 # annotations, and psycopg_pool lives in the [app] extra. A module-scope
@@ -108,6 +109,93 @@ async def ensure_user(email: str) -> int | None:
         {"email": clean, "name": clean.split("@")[0]},
     )
     return int(rows[0]["id"]) if rows else None
+
+#-----------------------------------------------------------------------------
+
+#: The longest display name kept from an identity provider; the column has no
+#: limit, but a name is shown in a header, not stored as a document.
+EXTERNAL_NAME_MAX = 64
+
+
+class SibianAccount(NamedTuple):
+    user_id: int
+    is_new: bool
+    email: str
+
+
+def _sibian_address() -> str:
+    """A new sibian account's address. `health_app_user.email` is NOT NULL, so
+    the account needs one, and it is RANDOM on purpose: an address derived
+    from the identity number (which is public) could be registered first by
+    anyone through a password or invitation route, and that account would
+    then be the one the person's first sign-in landed in. `.invalid`
+    (RFC 2606) is never delivered, so no code sign-in can claim it either."""
+    return secrets.token_hex(16) + "@sibian.invalid"
+
+
+async def ensure_sibian_user(subject: str, name: str, iss: str) -> SibianAccount | None:
+    """The live account for a sibian identity, opened on first sight.
+
+    The identity is found only through `external_identity`; no existing
+    account row is ever adopted (see `_sibian_address`). Opening one is a
+    single statement that creates the account and claims the identity for it
+    together, and the claim is a compare-and-set against what was read: it
+    takes the row only while it is still absent, or still points at the
+    deleted account seen. A concurrent first sign-in that loses retires the
+    account it just made and returns the winner's. After a deletion the
+    identity gets a new account; the deleted one never comes back.
+    """
+    clean = " ".join((name or "").split())[:EXTERNAL_NAME_MAX]
+    for _attempt in range(2):
+        rows = await execute_query(
+            "SELECT user_id FROM external_identity WHERE provider = 'sibian' AND subject = :subject",
+            {"subject": subject},
+        )
+        seen = int(rows[0]["user_id"]) if rows else None
+        live = await get_user(user_id=seen) if seen else None
+        if live:
+            await execute_query(
+                "UPDATE external_identity SET last_seen = now() WHERE provider = 'sibian' AND subject = :subject",
+                {"subject": subject},
+            )
+            # The name is the person's own, kept current from the node that
+            # vouched for them; an empty one keeps what is there.
+            if clean and live.get("name") != clean:
+                await execute_query(
+                    "UPDATE health_app_user SET name = :name, update_at = CURRENT_TIMESTAMP"
+                    " WHERE id = :id AND is_del = false",
+                    {"name": clean, "id": seen},
+                )
+            return SibianAccount(seen, False, str(live["email"]))
+
+        email = _sibian_address()
+        rows = await execute_query(
+            """
+            WITH account AS (
+                INSERT INTO health_app_user (is_del, email, name)
+                VALUES (false, :email, :name)
+                RETURNING id
+            ), claimed AS (
+                INSERT INTO external_identity (provider, subject, user_id, first_iss)
+                SELECT 'sibian', :subject, id, :iss FROM account
+                ON CONFLICT (provider, subject) DO UPDATE
+                    SET user_id = EXCLUDED.user_id, last_seen = now()
+                    WHERE external_identity.user_id = CAST(:seen AS integer)
+                RETURNING user_id
+            )
+            SELECT (SELECT id FROM account) AS created, (SELECT user_id FROM claimed) AS claimed
+            """,
+            {"email": email, "name": clean, "subject": subject, "iss": iss, "seen": seen},
+        )
+        created, claimed = rows[0]["created"], rows[0]["claimed"]
+        if claimed is not None:
+            return SibianAccount(int(claimed), True, email)
+        # Another sign-in claimed the identity between the read and the write.
+        await execute_query(
+            "UPDATE health_app_user SET is_del = TRUE, update_at = CURRENT_TIMESTAMP WHERE id = :id",
+            {"id": created},
+        )
+    return None
 
 #-----------------------------------------------------------------------------
 

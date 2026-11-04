@@ -87,7 +87,11 @@ class _CacheControl:
                     content_type = headers.get("content-type", "")
                     if path.startswith("/assets/") and status == 200:
                         headers["cache-control"] = "public, max-age=31536000, immutable"
-                    elif content_type.startswith("text/html") or path == "/mirobody.json":
+                    elif path == "/mirobody.json" or (
+                            content_type.startswith("text/html") and not path.startswith(_API_PREFIXES)):
+                        # The web client's shell. HTML under a backend prefix
+                        # (the OAuth completion page) is one person's answer,
+                        # and keeps the `no-store` default instead.
                         headers["cache-control"] = "no-cache"
             await send(message)
 
@@ -117,4 +121,10 @@ def add_htdoc_routes(app: FastAPI, dir: str) -> None:
         )
 
     app.frontend("/", directory=dir, fallback="index.html")
-    app.add_middleware(_CacheControl)
+    # `build_middlewares` already places this INSIDE `ResponseHeadersMiddleware`,
+    # so these headers are set before that layer fills in its `no-store`
+    # default. Added here, it would be the outermost layer and see the default
+    # already in place: every asset went out `no-store`. Only an app whose
+    # stack did not come from `build_middlewares` gets it from here.
+    if not any(m.cls is _CacheControl for m in app.user_middleware):
+        app.add_middleware(_CacheControl)

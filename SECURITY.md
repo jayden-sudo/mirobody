@@ -151,6 +151,7 @@ There is no telemetry and no usage reporting.
 | Hugging Face, or the mirror `HF_ENDPOINT` names | the first time the model server is asked for a model (the compose `llama` service, or `llama-server` on the host; this request is the model server's, not Mirobody's) | a download request for the model's files; nothing about you |
 | Garmin, Oura, Whoop | only after a person links one | OAuth tokens, and requests for that person's own data |
 | Your SMTP server | when `EMAIL_SMTP_*` is configured, to send a sign-in code | the address and the code |
+| The sibian-os nodes in `SIBIAN_ISSUERS` | when `AUTH_METHODS` lists `sibian`: at the first sign-in through a node, then at most hourly, and once a minute at most for a key id it does not know | a GET for the node's public signing keys; nothing about you |
 | S3 or Aliyun OSS | only when configured in place of the local disk | uploaded files |
 
 `② Standardize` (a name to a code, a unit to UCUM) calls nothing: the vocabulary

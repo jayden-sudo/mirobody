@@ -1,5 +1,47 @@
 ## Unreleased
 
+### Added
+
+- **Sign in with a sibian-os identity.** `POST /auth/sibian/exchange` takes
+  a short EdDSA assertion from a sibian-os node (the node has checked the
+  person's own signature) and answers with a one-hour session and no refresh
+  token. The nodes trusted are `SIBIAN_ISSUERS`, https only; their keys are
+  read from each node's JWKS, cached for an hour, kept when a refresh fails,
+  and refetched at most once a minute for an unknown key id. An assertion
+  signs in once (its `jti` is spent in the ephemeral store; a failure on
+  this server's side gives it back, so "try again" works). The identity is
+  kept in the new `external_identity` table and is found only there: a
+  sibian account's address is random, and no account registered by another
+  route is ever adopted, so nobody can open the account a sibian identity
+  will sign in to before its owner does. The same person through another
+  node is the same account, two first sign-ins at once open one, an account
+  merge takes the identity along, and after an account is deleted the
+  identity gets a new one rather than the old. An account with a passkey as
+  second factor is asked for it, as at every other sign-in. Keys are read
+  once for sign-ins arriving together. How to tell:
+  `mirobody/tests/test_sibian_auth.py`.
+
+- **`AUTH_METHODS` chooses which sign-in routes exist.** `email`, `password`,
+  `sibian`; unset is `[email, password]`, as before. Listing only `sibian`
+  leaves the address, password and activation routes unmounted (404). A list
+  that cannot work (an unknown method, `sibian` with no node to trust) stops
+  the boot.
+
+- **Several CORS origins.** `Access-Control-Allow-Origin` takes a
+  comma-separated list; the caller's origin is echoed when it is on it, and
+  every origin on it is also a place a device link may send the person back
+  to. One deployment can serve the pages of several sites (each sibian-os
+  city has a domain of its own).
+
+### Changed
+
+- **A response that sets no caching is `Cache-Control: private, no-store`.**
+  Almost every answer is one person's record, and a CDN in front of the
+  server caches by URL and extension when told nothing (`/files/<key>.pdf`
+  looks static). The web client's assets and the SSE streams set their own
+  and keep them; HTML the API itself renders (the OAuth completion page) is
+  no longer marked `no-cache` as if it were the web client's shell.
+
 ### Fixed
 
 - **A calculation step reads as a calculation.** 1.5.10 named the calculator

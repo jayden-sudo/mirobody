@@ -37,6 +37,9 @@ SIMPLE_RELINK_TABLES: list[tuple[str, list[str]]] = [
     ("th_override",                     ["user_id"]),
     ("user_behavior_insight",           ["user_id"]),
     ("webauthn_credentials",            ["user_id"]),
+    # The identities that sign in to the account follow it, or the next
+    # sibian sign-in opens an empty account beside the merged data.
+    ("external_identity",               ["user_id"]),
 
     # externally provisioned tables (absent in a standalone deployment)
     ("health_data_epic",                ["theta_user_id"]),

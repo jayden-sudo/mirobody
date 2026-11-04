@@ -1,4 +1,5 @@
 import logging
+import time
 
 from psycopg_pool import AsyncConnectionPool
 from mirobody.utils.ephemeral import EphemeralStore
@@ -6,8 +7,10 @@ from mirobody.utils.ephemeral import EphemeralStore
 from .auth.jwt import AbstractTokenValidator
 from .auth.email import create_email_validator
 from .auth.webauthn import WebAuthnService
+from .auth.sibian import LEEWAY as SIBIAN_REPLAY_SKEW, SibianAssertionRejected, SibianAssertionVerifier
 
 from .user import (
+    ensure_sibian_user,
     ensure_user,
     del_user,
     get_user,
@@ -24,6 +27,20 @@ from mirobody.kernel.ops import is_driver_exception
 from mirobody.utils import execute_query, json_response_with_code, json_response, Request, Response, Route
 
 logger = logging.getLogger(__name__)
+
+#: The ways a person may sign in. `email` is the emailed code (and binding an
+#: address), `password` is password register/login; both are the defaults, as
+#: before this setting existed. `sibian` is the exchange of a sibian-os node's
+#: assertion. A deployment whose people all arrive from sibian-os lists only
+#: `sibian`, and the other routes are not mounted at all: an unmounted route
+#: cannot be the one that was forgotten when the rest were locked down.
+AUTH_METHODS = ("email", "password", "sibian")
+DEFAULT_AUTH_METHODS = ("email", "password")
+
+#: A session minted from a sibian assertion. Short because renewal is cheap:
+#: the page signs a fresh request and exchanges again, so there is no refresh
+#: token to steal and a closed tab stops renewing within the hour.
+SIBIAN_SESSION_SECONDS = 3600
 
 #: The answer to a body that is not a JSON object. The parser's own message
 #: said where it stopped reading, which is the caller's input played back.
@@ -65,8 +82,26 @@ class UserService:
         webauthn_rp_name    : str = "",
         webauthn_origin     : str = "",
         webauthn_mfa_ticket_ttl : int = 300,
+
+        # Which sign-in routes exist (`AUTH_METHODS`), and the sibian exchange.
+        auth_methods        : tuple[str, ...] | list[str] | None = None,
+        sibian_verifier     : SibianAssertionVerifier | None = None,
+        sibian_session_seconds: int = SIBIAN_SESSION_SECONDS,
     ):
         self._token_validator = token_validator
+
+        methods = tuple(auth_methods) if auth_methods else DEFAULT_AUTH_METHODS
+        unknown = sorted(set(methods) - set(AUTH_METHODS))
+        if unknown:
+            raise ValueError(f"AUTH_METHODS: unknown method(s) {unknown}; known: {list(AUTH_METHODS)}")
+        if "sibian" in methods and sibian_verifier is None:
+            raise ValueError("AUTH_METHODS lists sibian but SIBIAN_ISSUERS names no node to trust")
+        if "sibian" in methods and ephemeral is None:
+            # Without the store an assertion could be replayed until it expires.
+            raise ValueError("AUTH_METHODS lists sibian, which needs the ephemeral store")
+        self.auth_methods = methods
+        self._sibian_verifier = sibian_verifier
+        self._sibian_session_seconds = sibian_session_seconds if sibian_session_seconds > 0 else SIBIAN_SESSION_SECONDS
 
         self._email_validator = create_email_validator(
             smtp_host       = email_smtp_host,
@@ -109,18 +144,25 @@ class UserService:
         else:
             self.routes = []
 
-        self.routes.append(Route(f"{uri_prefix}/email/login", endpoint=self.email_login_handler, methods=["POST", "OPTIONS"]))
-        self.routes.append(Route(f"{uri_prefix}/email/verify", endpoint=self.email_verify_handler, methods=["POST", "OPTIONS"]))
-        self.routes.append(Route(f"{uri_prefix}/email/bind", endpoint=self.email_bind_handler, methods=["POST", "OPTIONS"]))
+        if "email" in methods:
+            self.routes.append(Route(f"{uri_prefix}/email/login", endpoint=self.email_login_handler, methods=["POST", "OPTIONS"]))
+            self.routes.append(Route(f"{uri_prefix}/email/verify", endpoint=self.email_verify_handler, methods=["POST", "OPTIONS"]))
+            self.routes.append(Route(f"{uri_prefix}/email/bind", endpoint=self.email_bind_handler, methods=["POST", "OPTIONS"]))
         # Password login. Additive: the email-code routes above are unchanged, and
         # an account with `password_hash IS NULL` can still only use those.
-        self.routes.append(Route(f"{uri_prefix}/password/register", endpoint=self.password_register_handler, methods=["POST", "OPTIONS"]))
-        self.routes.append(Route(f"{uri_prefix}/password/login", endpoint=self.password_login_handler, methods=["POST", "OPTIONS"]))
+        if "password" in methods:
+            self.routes.append(Route(f"{uri_prefix}/password/register", endpoint=self.password_register_handler, methods=["POST", "OPTIONS"]))
+            self.routes.append(Route(f"{uri_prefix}/password/login", endpoint=self.password_login_handler, methods=["POST", "OPTIONS"]))
+        if "sibian" in methods:
+            self.routes.append(Route(f"{uri_prefix}/auth/sibian/exchange", endpoint=self.sibian_exchange_handler, methods=["POST", "OPTIONS"]))
 
-        # Handing a managed (virtual) member's account to that person.
-        self.routes.append(Route(f"{uri_prefix}/account/activation", endpoint=self.activation_create_handler, methods=["POST", "OPTIONS"]))
-        self.routes.append(Route(f"{uri_prefix}/account/activation/info", endpoint=self.activation_info_handler, methods=["POST", "OPTIONS"]))
-        self.routes.append(Route(f"{uri_prefix}/account/activation/complete", endpoint=self.activation_complete_handler, methods=["POST", "OPTIONS"]))
+        # Handing a managed (virtual) member's account to that person. The person
+        # completes it by signing in with an address or a password, so with
+        # neither of those enabled there is nothing to hand the account over to.
+        if "email" in methods or "password" in methods:
+            self.routes.append(Route(f"{uri_prefix}/account/activation", endpoint=self.activation_create_handler, methods=["POST", "OPTIONS"]))
+            self.routes.append(Route(f"{uri_prefix}/account/activation/info", endpoint=self.activation_info_handler, methods=["POST", "OPTIONS"]))
+            self.routes.append(Route(f"{uri_prefix}/account/activation/complete", endpoint=self.activation_complete_handler, methods=["POST", "OPTIONS"]))
 
         self.routes.append(Route(f"{uri_prefix}/user/del", endpoint=self.user_unregister_handler, methods=["POST", "OPTIONS"]))
         self.routes.append(Route(f"{uri_prefix}/user/update_name", endpoint=self.user_update_name_handler, methods=["POST", "OPTIONS"]))
@@ -188,6 +230,68 @@ class UserService:
         #-------------------------------------------------
 
         return await self._generate_auth_response(id, email, "email", request)
+
+    #-------------------------------------------------------------------------
+
+    async def sibian_exchange_handler(self, request: Request) -> Response:
+        """A sibian-os node's assertion in, a one-hour session out.
+
+        The node has already checked the person's own signature; this checks
+        the node's (`SibianAssertionVerifier`), spends the assertion's `jti`
+        so it signs in once, and opens or finds the account. No refresh token:
+        the page renews by exchanging a fresh assertion.
+        """
+        if request.method == "OPTIONS":
+            return json_response_with_code(disable_log=True)
+
+        data = await _json_object(request)
+        assertion = data.get("assertion") if data else None
+        if not isinstance(assertion, str) or not assertion:
+            return json_response_with_code(-1, "An assertion is required.", request=request, status=400)
+
+        try:
+            claims = await self._sibian_verifier.verify(assertion)
+        except SibianAssertionRejected as e:
+            return json_response_with_code(-2, str(e), request=request, status=401)
+
+        # Spend the assertion: `nx` succeeds for the first caller only, and the
+        # key outlives the assertion's own validity (plus the verifier's skew),
+        # so a copy lifted from a log or a proxy cannot open a second session.
+        ttl = max(1, claims.expires_at - int(time.time()) + SIBIAN_REPLAY_SKEW)
+        spent = f"sibian:jti:{claims.issuer}:{claims.jti}"
+        try:
+            first = await self._ephemeral.set(spent, "1", ex=ttl, nx=True)
+        except Exception as e:
+            logger.error("sibian replay check failed: error_type=%s", type(e).__name__,
+                         exc_info=not is_driver_exception(e))
+            return json_response_with_code(-3, "The sign-in could not be checked. Try again.", request=request, status=503)
+        if not first:
+            logger.info("sibian assertion refused: reason=replayed")
+            return json_response_with_code(-2, "The sign-in assertion was already used.", request=request, status=401)
+
+        try:
+            account = await ensure_sibian_user(claims.subject, claims.name, claims.issuer)
+        except Exception as e:
+            logger.error("sibian account lookup failed: error_type=%s", type(e).__name__,
+                         exc_info=not is_driver_exception(e))
+            account = None
+        if not account:
+            # Our failure, not the caller's: give the assertion back, or the
+            # "Try again" below would be answered "already used". It signed
+            # no one in, so nothing is replayed by honouring it once more.
+            try:
+                await self._ephemeral.delete(spent)
+            except Exception as e:
+                logger.warning("sibian assertion not released: error_type=%s", type(e).__name__,
+                               exc_info=not is_driver_exception(e))
+            return json_response_with_code(-3, "The account could not be opened. Try again.", request=request, status=503)
+        user_id, is_new, email = account
+
+        return await self._generate_auth_response(
+            user_id, email, "sibian", request,
+            expires_in=self._sibian_session_seconds, issue_refresh=False,
+            extra={"user_id": str(user_id), "is_new_user": is_new},
+        )
 
     #-------------------------------------------------------------------------
 
@@ -621,8 +725,22 @@ class UserService:
         email: str,
         auth_method: str = "",
         request: Request | None = None,
+        *,
+        expires_in: int = 0,
+        issue_refresh: bool = True,
+        extra: dict | None = None,
     ) -> Response:
-        """Generate final auth response, with MFA challenge if required."""
+        """Generate final auth response, with MFA challenge if required.
+
+        Every sign-in ends here, so the second factor is asked for the same
+        way whichever route proved the person. `expires_in` (0: the
+        validator's default) and `issue_refresh` let a route mint shorter
+        sessions with no refresh token (the sibian exchange); `extra` is
+        added to the answer either way.
+        """
+        lifetime = expires_in if expires_in > 0 else (
+            self._token_validator.get_expires_in() if self._token_validator else 60 * 60 * 24 * 7)
+
         # Check if WebAuthn MFA is required.
         if self._webauthn_service:
             mfa_challenge = await self._webauthn_service.check_mfa_required(user_id, email)
@@ -632,6 +750,7 @@ class UserService:
                 fallback_token, fallback_refresh, _ = await self._token_validator.generate_tokens(
                     str(user_id), email, auth_method,
                     gen_claims_func=lambda _uid, _em: {"aal": 1},
+                    expires_in=expires_in,
                 )
                 if fallback_token:
                     mfa_challenge["fallback_token"] = fallback_token
@@ -639,13 +758,10 @@ class UserService:
                     # handles "status": "mfa_required" and uses fallback_token directly.
                     mfa_challenge["access_token"] = fallback_token
                     mfa_challenge["token_type"] = "Bearer"
-                    mfa_challenge["expires_in"] = (
-                        self._token_validator.get_expires_in()
-                        if self._token_validator else 60 * 60 * 24 * 7
-                    )
-                    if fallback_refresh:
+                    mfa_challenge["expires_in"] = lifetime
+                    if fallback_refresh and issue_refresh:
                         mfa_challenge["refresh_token"] = fallback_refresh
-                return json_response_with_code(data=mfa_challenge, request=request)
+                return json_response_with_code(data={**mfa_challenge, **(extra or {})}, request=request)
 
         # No MFA required: issue AAL1 token directly.
         aal_level = 1 if self._webauthn_service else None
@@ -655,19 +771,21 @@ class UserService:
             email,
             auth_method,
             gen_claims_func=(lambda _uid, _em: {"aal": aal_level}) if aal_level else None,
+            expires_in=expires_in,
         )
         if err:
             return json_response_with_code(-100, err, request=request)
 
         result = self._generate_verification_response(
-            access_token, refresh_token, user_id=user_id, email=email
+            access_token, refresh_token if issue_refresh else None, user_id=user_id, email=email
         )
+        result["expires_in"] = lifetime
 
         # Tell frontend WebAuthn is not yet registered for this user.
         if self._webauthn_service:
             result["webauthn_registered"] = False
 
-        return json_response_with_code(data=result, request=request)
+        return json_response_with_code(data={**result, **(extra or {})}, request=request)
 
     #-------------------------------------------------------------------------
 

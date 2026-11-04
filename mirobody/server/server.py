@@ -87,6 +87,22 @@ def _webpage_config(config) -> dict[str, Any]:
     return webpage
 
 
+def _sibian_verifier(auth_methods: list[str] | None, issuers: list | dict | None, audience: str):
+    """The verifier for the sibian exchange, or None when sibian sign-in is
+    off or no node is trusted. Read only when `AUTH_METHODS` lists sibian: a
+    stale SIBIAN_ISSUERS left in an .env must not stop a server that does not
+    use it. When it is used, a malformed one raises here, at boot."""
+    from mirobody.user.auth.sibian import SibianAssertionVerifier, fetch_jwks, issuers_from_config
+
+    if "sibian" not in (auth_methods or []):
+        return None
+    trusted = issuers_from_config(issuers)
+    if not trusted:
+        return None
+    logger.info("sibian sign-in: trusting %d node(s)", len(trusted))
+    return SibianAssertionVerifier(trusted, audience or "mirobody", fetch_jwks)
+
+
 class Server:
     def __init__(
         self,
@@ -135,6 +151,14 @@ class Server:
         webauthn_rp_name        : str = "",
         webauthn_origin         : str = "",
         webauthn_mfa_ticket_ttl : int = 300,
+
+        # The following parameters can be generated via
+        #   config.get_sign_in_options().
+
+        auth_methods            : list[str] | None = None,
+        sibian_issuers          : list | dict | None = None,
+        sibian_audience         : str = "mirobody",
+        sibian_session_seconds  : int = 3600,
 
         webpage_config          : dict[str, Any] | None = None,
 
@@ -245,6 +269,10 @@ class Server:
             webauthn_rp_name    = webauthn_rp_name,
             webauthn_origin     = webauthn_origin,
             webauthn_mfa_ticket_ttl = webauthn_mfa_ticket_ttl,
+
+            auth_methods            = auth_methods,
+            sibian_verifier         = _sibian_verifier(auth_methods, sibian_issuers, sibian_audience),
+            sibian_session_seconds  = sibian_session_seconds,
         )
 
         # Registering takes a code sent to the address when one can be sent.
@@ -412,6 +440,7 @@ class Server:
             # WebAuthn service to enrol with, and an account with MFA on was
             # never asked for a second factor.
             **config.get_webauthn_options(),
+            **config.get_sign_in_options(),
         )
 
         #-----------------------------------------------------

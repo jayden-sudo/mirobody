@@ -186,11 +186,11 @@ def _return_origins() -> list[str]:
     cfg = global_config()
     if cfg is None:
         return []
+    from mirobody.server.middleware_stack import cors_origins
+
     allowed = [str(origin) for origin in cfg.get_list("OAUTH_RETURN_ORIGINS") or []]
-    # A list of (name, value) pairs, as `middleware_stack` reads it.
-    cors_origin = dict(cfg.http.headers or []).get("Access-Control-Allow-Origin", "")
-    if cors_origin and cors_origin != "*":
-        allowed.append(cors_origin)
+    # `*` lets any page call the API; it is not a place to send someone back to.
+    allowed += [origin for origin in cors_origins(cfg.http.headers) if origin != "*"]
     return allowed
 
 

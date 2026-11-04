@@ -1701,6 +1701,26 @@ def plan_rows(
     return out[:limit]
 
 
+def day_slots(
+    plans: Sequence[MedicationPlan], events: Sequence[DoseEvent], *, day: date, now_ms: int, tz: str
+) -> list[tuple[MedicationPlan, DoseSlot, str, DoseEvent | None]]:
+    """Every slot an active plan schedules on ``day`` in ``tz``, with its
+    derived state and the event that answers it (the latest, as
+    :func:`slot_state` reads it), in the order a person takes them: by
+    instant, then name. The rows of a "today's medicines" screen; nothing in
+    them is stored."""
+    answered = _answers(events)
+    out: list[tuple[MedicationPlan, DoseSlot, str, DoseEvent | None]] = []
+    for plan in plans:
+        if plan.status == PLAN_ENTERED_IN_ERROR or effective_status(plan, day) != EFFECTIVE_ACTIVE:
+            continue
+        for slot in project_schedule(plan, start=day, end=day, tz=tz):
+            event = answered.get(slot.key)
+            out.append((plan, slot, slot_state(slot, event, now_ms=now_ms), event))
+    out.sort(key=lambda r: (r[1].utc_ms if r[1].utc_ms is not None else 0, r[0].concept.text))
+    return out
+
+
 def log_rows(
     events: Sequence[DoseEvent], plans: Mapping[str, MedicationPlan], *, keywords: Sequence[str] = (),
     limit: int = MAX_ROWS,

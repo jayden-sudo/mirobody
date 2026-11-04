@@ -11,12 +11,12 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field, model_validator
 
-from mirobody.collect import PostgresMedicationStore
+from mirobody.collect import PostgresDoseLogStore, PostgresMedicationStore
 from mirobody.kernel import meds, series
 from mirobody.server.auth import subject_for, verify_token
 from mirobody.server.envelope import ErrorResponse, StandardResponse, failed
@@ -256,6 +256,102 @@ async def list_medications(
     if status:
         rows = [r for r in rows if r["effective_status"] == status]
     return StandardResponse(data={"items": rows, "total": len(rows)})
+
+
+class DoseTick(BaseModel):
+    """One scheduled slot answered: `date` and `slot` are the slot's own
+    (`GET /today` gives them), `status` what happened."""
+
+    plan_id: str = Field(min_length=1, max_length=200)
+    date: date
+    slot: str = Field(min_length=1, max_length=64)
+    status: Literal["taken", "skipped"]
+
+
+def _json_slot(plan: meds.MedicationPlan, slot: meds.DoseSlot, state: str, event: meds.DoseEvent | None) -> dict[str, Any]:
+    return {
+        "plan_id": plan.plan_id,
+        "name": plan.concept.text,
+        "strength": plan.concept.strength,
+        "date": slot.local_date.isoformat(),
+        "slot": slot.slot,
+        "due_at": datetime.fromtimestamp(slot.utc_ms / 1000, series.zone(slot.tz)).isoformat() if slot.utc_ms is not None else None,
+        "dose": {"value": slot.dose.value, "unit": slot.dose.unit} if slot.dose else None,
+        "state": state,
+        "event_id": event.event_id if event else None,
+        # When it was answered, in the event's zone: what a slot with no clock
+        # time ("once a day", "2 of 3") has to place it on a timeline.
+        "answered_at": datetime.fromtimestamp(event.taken_at_ms / 1000, series.zone(event.tz)).isoformat() if event else None,
+    }
+
+
+# Declared before `/{plan_id}`: a path parameter would otherwise take
+# "today" for a plan id and answer 404.
+@router.get("/today")
+async def today_doses(target_user_id: str | None = Query(None), user_id: str = Depends(verify_token)):
+    """Every slot the person's active plans schedule on their local today,
+    each with its derived state (`upcoming`, `due`, `taken`, `skipped`,
+    `missed`) and the event that answered it."""
+    subject, error = await _subject(user_id, target_user_id)
+    if error:
+        return error
+    try:
+        tz = await _zone(subject)
+        now = datetime.now(series.zone(tz))
+        plans = await PostgresMedicationStore().list(subject)
+        events = await PostgresDoseLogStore().list(subject, (now.date(), now.date()))
+    except Exception as exc:
+        return failed("today's doses", exc, "Today's medicines could not be loaded.")
+    rows = meds.day_slots(plans, events, day=now.date(), now_ms=int(now.timestamp() * 1000), tz=tz)
+    return StandardResponse(data={"date": now.date().isoformat(), "tz": tz, "slots": [_json_slot(*r) for r in rows]})
+
+
+@router.post("/doses")
+async def tick_dose(body: DoseTick, user_id: str = Depends(verify_token)):
+    """Answer one scheduled slot taken or skipped. A later answer to the same
+    slot wins (`meds.slot_state` reads the latest); an undo is the DELETE."""
+    owner, error = await _owner_or_404(user_id, body.plan_id)
+    if error:
+        return error
+    _, error = await _subject(user_id, owner, write=True)
+    if error:
+        return error
+    try:
+        plan = await PostgresMedicationStore().get(body.plan_id)
+        tz = await _zone(owner)
+    except Exception as exc:
+        return failed("dose tick", exc, "The dose could not be recorded.")
+    if plan is None or plan.status == meds.PLAN_ENTERED_IN_ERROR:
+        return _not_found()
+    name = meds.normalize_slot(body.slot)
+    slot = next((s for s in meds.project_schedule(plan, start=body.date, end=body.date, tz=tz) if s.slot == name), None)
+    if slot is None:
+        return ErrorResponse(code=400, msg="That plan schedules no dose at that slot on that day.")
+    event = meds.DoseEvent(
+        event_id=uuid.uuid4().hex, plan_id=plan.plan_id, status=body.status,
+        taken_at_ms=int(datetime.now().timestamp() * 1000), tz=tz, slot_key=slot.key, dose=slot.dose,
+    )
+    try:
+        await PostgresDoseLogStore().append(event, subject_id=str(owner))
+    except Exception as exc:
+        return failed("dose tick", exc, "The dose could not be recorded.")
+    return StandardResponse(data={"event_id": event.event_id, "state": body.status})
+
+
+@router.delete("/doses/{event_id}")
+async def untick_dose(event_id: str, target_user_id: str | None = Query(None), user_id: str = Depends(verify_token)):
+    """Take an answer back: the slot is upcoming, due or missed again, as the
+    clock says. Someone else's event answers as a missing one does."""
+    subject, error = await _subject(user_id, target_user_id, write=True)
+    if error:
+        return error
+    try:
+        done = await PostgresDoseLogStore().retract(subject, event_id)
+    except Exception as exc:
+        return failed("dose undo", exc, "The dose could not be taken back.")
+    if not done:
+        return ErrorResponse(code=404, msg="No such dose.")
+    return StandardResponse(data={"event_id": event_id, "deleted": True})
 
 
 @router.get("/{plan_id}")

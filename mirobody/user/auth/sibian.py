@@ -191,7 +191,11 @@ def issuers_from_config(value: object) -> dict[str, str]:
     Either a list of node addresses (each publishes at `JWKS_PATH`) or a
     mapping from address to a JWKS URL of its own. Every URL must be https:
     whoever can swap the JWKS in transit can sign in as anyone. Plain http is
-    accepted only for a node on this machine, which is development.
+    accepted only for a node on this machine, which is development. One more
+    development allowance: a JWKS URL (never an `iss`) may be plain http on
+    `host.docker.internal`, for a server in a container reaching a node on its
+    host, where `localhost` is the container itself. Outside Docker that name
+    is ordinary DNS, so do not use it in production.
     """
     if value in (None, "", [], {}):
         return {}
@@ -206,19 +210,26 @@ def issuers_from_config(value: object) -> dict[str, str]:
     for iss, jwks in pairs:
         iss = iss.strip().rstrip("/")
         jwks = (jwks or iss + JWKS_PATH).strip()
-        for url in (iss, jwks):
-            _require_safe_url(url)
+        _require_safe_url(iss)
+        _require_safe_url(jwks, host_alias=True)
         issuers[iss] = jwks
     return issuers
 
 
-def _require_safe_url(url: str) -> None:
+#: Docker's name for the machine a container runs on. A node running on the
+#: host is reached under this name from inside a container, where `localhost`
+#: is the container itself. Only a JWKS address may use it, never an `iss`.
+DOCKER_HOST_ALIAS = "host.docker.internal"
+
+
+def _require_safe_url(url: str, host_alias: bool = False) -> None:
     from urllib.parse import urlsplit
 
     parts = urlsplit(url)
     if parts.scheme == "https" and parts.netloc:
         return
-    if parts.scheme == "http" and parts.hostname in ("localhost", "127.0.0.1", "::1"):
+    local = ("localhost", "127.0.0.1", "::1") + ((DOCKER_HOST_ALIAS,) if host_alias else ())
+    if parts.scheme == "http" and parts.hostname in local:
         return
     raise ValueError(f"SIBIAN_ISSUERS: {url!r} is not an https URL")
 

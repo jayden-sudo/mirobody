@@ -17,7 +17,9 @@
 - **Sign in with a sibian-os identity.** `POST /auth/sibian/exchange` takes
   a short EdDSA assertion from a sibian-os node (the node has checked the
   person's own signature) and answers with a one-hour session and no refresh
-  token. The nodes trusted are `SIBIAN_ISSUERS`, https only; their keys are
+  token. The nodes trusted are `SIBIAN_ISSUERS`, https only (development
+  only: plain http for a node on this machine, and for a JWKS URL on
+  `host.docker.internal`, never for the node's own address); their keys are
   read from each node's JWKS, cached for an hour, kept when a refresh fails,
   and refetched at most once a minute for an unknown key id. An assertion
   signs in once (its `jti` is spent in the ephemeral store; a failure on

@@ -154,6 +154,13 @@ There is no telemetry and no usage reporting.
 | The sibian-os nodes in `SIBIAN_ISSUERS` | when `AUTH_METHODS` lists `sibian`: at the first sign-in through a node, then at most hourly, and once a minute at most for a key id it does not know | a GET for the node's public signing keys; nothing about you |
 | S3 or Aliyun OSS | only when configured in place of the local disk | uploaded files |
 
+`SIBIAN_ISSUERS` takes https addresses. For development it also accepts plain
+http for a node on `localhost`, and for a JWKS URL (never a node's own address)
+on `host.docker.internal`, so a containerised server can reach a node on its
+host. Plain http lets whoever sits on the path swap the keys and sign in as
+anyone, and outside Docker `host.docker.internal` is resolved by ordinary DNS:
+use https in production.
+
 `② Standardize` (a name to a code, a unit to UCUM) calls nothing: the vocabulary
 ships inside the package.
 

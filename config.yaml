@@ -154,7 +154,10 @@ JWT_SCOPE: "mcp:read mcp:write"
 # The sibian-os nodes trusted to vouch for their people
 # (`POST /auth/sibian/exchange`). Each is https, and publishes its signing keys
 # at /.well-known/sibian-health/jwks.json; a mapping {node: jwks_url} names
-# another address. In .env: comma-separated, or JSON.
+# another address. In .env: comma-separated, or JSON. Development only: plain
+# http is accepted for a node on this machine (localhost), and for a JWKS URL
+# (never the node itself) on host.docker.internal, e.g. from a container:
+# {"http://localhost:5173": "http://host.docker.internal:8970/.well-known/sibian-health/jwks.json"}
 # SIBIAN_ISSUERS: ['https://sibian-os.exe.xyz', 'https://localfirst-city.exe.xyz']
 # The `aud` the nodes put in their assertions (default mirobody), and how long
 # the session an exchange returns lasts, in seconds (default 3600; there is no

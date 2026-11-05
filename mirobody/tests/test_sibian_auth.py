@@ -335,6 +335,30 @@ def test_a_node_whose_keys_could_be_swapped_in_transit_is_refused(value):
         issuers_from_config(value)
 
 
+def test_a_node_on_the_docker_host_may_publish_keys_over_plain_http_for_development():
+    assert issuers_from_config({
+        "http://localhost:5173": "http://host.docker.internal:8970/.well-known/sibian-health/jwks.json",
+    }) == {
+        "http://localhost:5173": "http://host.docker.internal:8970/.well-known/sibian-health/jwks.json",
+    }
+
+
+def test_the_docker_host_alias_is_never_an_issuer():
+    with pytest.raises(ValueError):
+        issuers_from_config(["http://host.docker.internal:8970"])
+
+
+@pytest.mark.parametrize("jwks", [
+    pytest.param("http://host.docker.internal.evil.com/jwks.json", id="suffix"),
+    pytest.param("http://evil-host.docker.internal/jwks.json", id="prefix"),
+    pytest.param("http://host.docker.internal@evil.com/jwks.json", id="userinfo"),
+    pytest.param("http://host.docker.internal./jwks.json", id="trailing-dot"),
+])
+def test_only_the_exact_docker_host_name_may_publish_keys_over_plain_http(jwks):
+    with pytest.raises(ValueError):
+        issuers_from_config({"https://pol.4seas.xyz": jwks})
+
+
 def test_a_node_on_this_machine_may_use_plain_http_for_development():
     assert issuers_from_config(["http://localhost:8000"]) == {
         "http://localhost:8000": "http://localhost:8000/.well-known/sibian-health/jwks.json",

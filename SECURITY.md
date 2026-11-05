@@ -154,6 +154,11 @@ There is no telemetry and no usage reporting.
 | The sibian-os nodes in `SIBIAN_ISSUERS` | when `AUTH_METHODS` lists `sibian`: at the first sign-in through a node, then at most hourly, and once a minute at most for a key id it does not know | a GET for the node's public signing keys; nothing about you |
 | S3 or Aliyun OSS | only when configured in place of the local disk | uploaded files |
 
+Inbound, not outbound: when `INGEST_PUBLIC_KEY` is set, a hub holding the
+matching private key can write device readings for **any** sibian identity
+(`POST /api/v1/ingest/batch`; nothing is read back except whether the account
+exists). Unset, the route does not exist. See `docs/hub-ingest.md`.
+
 `SIBIAN_ISSUERS` takes https addresses. For development it also accepts plain
 http for a node on `localhost`, and for a JWKS URL (never a node's own address)
 on `host.docker.internal`, so a containerised server can reach a node on its

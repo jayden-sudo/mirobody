@@ -571,6 +571,37 @@ class Config:
             "sibian_session_seconds": self.get_int("SIBIAN_SESSION_SECONDS", 3600),
         }
 
+    def get_hub_options(self) -> dict | None:
+        """The device-push surface (`INGEST_*`), or None while no key is set.
+        A key that is set but unusable is a start-up error, never a silent off."""
+        pub = self.get_str("INGEST_PUBLIC_KEY")
+        if not pub:
+            return None
+        # Imported here: the config module is on everything's import path.
+        from mirobody.collect.hub_registry import Registry
+        from mirobody.user.auth.hub_signature import load_public_key
+
+        audience = self.get_str("INGEST_AUDIENCE")
+        if not audience or len(audience) > 64 or not audience.isprintable():
+            raise ValueError("INGEST_AUDIENCE must be 1-64 characters with no control characters")
+        raw_days = self.get("INGEST_BACKFILL_DAYS")
+        try:
+            days = 4000 if raw_days in (None, "") else int(str(raw_days).strip())
+        except ValueError:
+            days = 0
+        if not 1 <= days <= 36500:
+            raise ValueError("INGEST_BACKFILL_DAYS must be between 1 and 36500")
+        path = self.get_str("INGEST_REGISTRY_FILE")
+        if not path:
+            raise ValueError("INGEST_REGISTRY_FILE is required when INGEST_PUBLIC_KEY is set")
+        return {
+            "public_key"    : load_public_key(pub),
+            "audience"      : audience,
+            "registry"      : Registry.load(path),
+            "auto_create"   : self.get_bool("INGEST_AUTO_CREATE_USERS", True),
+            "backfill_days" : days,
+        }
+
     def get_postgresql(self, key: str="") -> "PostgreSQLConfig":
         # Imported here, not at module scope. `mirobody.utils.config` is on the
         # import path of the whole ENGINE (`mirobody.engine`, `indicator`,

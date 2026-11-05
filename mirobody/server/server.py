@@ -535,6 +535,12 @@ class Server:
         app.include_router(data_export_router)
         app.include_router(setup_router)
 
+        hub = config.get_hub_options()
+        if hub:  # device push: absent (404) unless INGEST_PUBLIC_KEY is set
+            from mirobody.server.routers.hub_router import router as hub_router
+            app.state.hub = hub
+            app.include_router(hub_router)
+
         for router in fastapi_routers:
             app.include_router(router)
 

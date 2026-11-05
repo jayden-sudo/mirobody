@@ -133,6 +133,25 @@ def _sibian_address() -> str:
     return secrets.token_hex(16) + "@sibian.invalid"
 
 
+class ExternalUser(NamedTuple):
+    """`state` is "found" (`user_id` set), "missing" (no mapping row) or
+    "deleted" (a mapping row whose account is soft-deleted)."""
+    state: str
+    user_id: int | None = None
+
+
+async def find_external_user(provider: str, subject: str) -> ExternalUser:
+    """Read-only: who an external identity maps to, and whether they still exist."""
+    rows = await execute_query(
+        "SELECT user_id FROM external_identity WHERE provider = :provider AND subject = :subject",
+        {"provider": provider, "subject": subject},
+    )
+    if not rows:
+        return ExternalUser("missing")
+    seen = int(rows[0]["user_id"])
+    return ExternalUser("found", seen) if await get_user(user_id=seen) else ExternalUser("deleted", seen)
+
+
 async def ensure_sibian_user(subject: str, name: str, iss: str) -> SibianAccount | None:
     """The live account for a sibian identity, opened on first sight.
 
@@ -147,12 +166,9 @@ async def ensure_sibian_user(subject: str, name: str, iss: str) -> SibianAccount
     """
     clean = " ".join((name or "").split())[:EXTERNAL_NAME_MAX]
     for _attempt in range(2):
-        rows = await execute_query(
-            "SELECT user_id FROM external_identity WHERE provider = 'sibian' AND subject = :subject",
-            {"subject": subject},
-        )
-        seen = int(rows[0]["user_id"]) if rows else None
-        live = await get_user(user_id=seen) if seen else None
+        found = await find_external_user("sibian", subject)
+        seen = found.user_id
+        live = await get_user(user_id=seen) if found.state == "found" else None
         if live:
             await execute_query(
                 "UPDATE external_identity SET last_seen = now() WHERE provider = 'sibian' AND subject = :subject",

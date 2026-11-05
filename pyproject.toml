@@ -285,6 +285,8 @@ app = [
     "boto3",
     # Identity and mail.
     "pyjwt",
+    # Ed25519 signatures for the device-push route (hub_signature.py).
+    "cryptography",
     "webauthn>=2.0.0",
     "mandrill",
     # OAuth1 — among the shipped providers, only Garmin still speaks it.

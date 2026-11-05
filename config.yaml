@@ -163,6 +163,15 @@ JWT_SCOPE: "mcp:read mcp:write"
 # the session an exchange returns lasts, in seconds (default 3600; there is no
 # refresh token: the page exchanges a fresh assertion).
 # SIBIAN_AUDIENCE: mirobody
+
+# Device push (POST /api/v1/ingest/batch, docs/hub-ingest.md). Off until the
+# public key is set. Base64 of the hub's 32-byte Ed25519 public key; the
+# audience the hub signs in; the YAML file naming the metrics it may push.
+# INGEST_PUBLIC_KEY: ""
+# INGEST_AUDIENCE: mirobody-dev
+# INGEST_REGISTRY_FILE: /path/to/hub_registry.yaml
+# INGEST_AUTO_CREATE_USERS: true   # open an account for a sibian identity not seen yet
+# INGEST_BACKFILL_DAYS: 4000       # readings older than this are refused
 # SIBIAN_SESSION_SECONDS: 3600
 
 #-----------------------------------------------------------------------------

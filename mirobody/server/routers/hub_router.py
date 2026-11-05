@@ -94,9 +94,13 @@ async def ingest(request: Request):
         result = await hub_ingest.ingest_batch(
             batch, registry=cfg["registry"], backfill_days=cfg["backfill_days"], auto_create=cfg["auto_create"])
     except hub_ingest.RequestError as exc:
-        logger.info("hub batch refused: batch=%s uid=%s code=%s", batch.batch_id, batch.uid[:8], exc.code)
+        short_uid = batch.uid[:8]
+        logger.info("hub batch refused: batch=%s uid=%s code=%s", batch.batch_id, short_uid, exc.code)
         return _reply(exc.status, exc.code, {"errors": exc.errors} if exc.errors else None)
-    logger.info("hub batch: batch=%s uid=%s devices=%d received=%d inserted=%d skipped=%d rejected=%d in %.2fs",
-                batch.batch_id, batch.uid[:8], len(batch.devices), result["received"], result["inserted"],
-                result["skipped"], sum(result["rejected"].values()), time.monotonic() - started)
+    short_uid = batch.uid[:8]
+    received_count, inserted, skipped = result["received"], result["inserted"], result["skipped"]
+    rejected_count = sum(result["rejected"].values())
+    duration_ms = int((time.monotonic() - started) * 1000)
+    logger.info("hub batch: batch=%s uid=%s devices=%d received=%d inserted=%d skipped=%d rejected=%d in %dms",
+                batch.batch_id, short_uid, len(batch.devices), received_count, inserted, skipped, rejected_count, duration_ms)
     return _reply(200, "ok", result)

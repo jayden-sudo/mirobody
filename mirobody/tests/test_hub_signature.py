@@ -5,6 +5,10 @@ import hashlib
 import time
 
 import pytest
+
+pytest.importorskip("cryptography")
+
+
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from mirobody.user.auth.hub_signature import PATH, Rejected, load_public_key, verify

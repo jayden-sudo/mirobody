@@ -6,8 +6,16 @@ import json
 import logging
 import time
 
-import httpx
 import pytest
+
+pytest.importorskip("httpx")
+pytest.importorskip("fastapi")
+pytest.importorskip("pydantic")
+pytest.importorskip("cryptography")
+pytest.importorskip("ruamel.yaml")
+
+import httpx
+
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi import FastAPI
 

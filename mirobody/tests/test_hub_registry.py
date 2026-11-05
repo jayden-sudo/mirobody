@@ -4,6 +4,11 @@ from datetime import datetime, timedelta, UTC
 
 import pytest
 
+pytest.importorskip("pydantic")
+pytest.importorskip("ruamel.yaml")
+
+
+
 from mirobody.collect.hub_registry import Registry, Reject, check_range, parse_time, render
 
 YAML = """

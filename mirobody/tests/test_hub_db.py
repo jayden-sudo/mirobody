@@ -8,8 +8,16 @@ import time
 from pathlib import Path
 from uuid import uuid4
 
-import httpx
 import pytest
+
+pytest.importorskip("httpx")
+pytest.importorskip("fastapi")
+pytest.importorskip("pydantic")
+pytest.importorskip("cryptography")
+pytest.importorskip("ruamel.yaml")
+
+import httpx
+
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi import FastAPI
 

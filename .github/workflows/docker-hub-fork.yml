@@ -1,0 +1,109 @@
+name: Docker Hub image (jayden4sudo)
+
+# Builds and pushes jayden4sudo/mirobody on every push to main that changes
+# code that goes into the image, and on manual dispatch. Independent of
+# docker-hub.yml, which stays the release-tag workflow for the upstream image.
+#
+# CHANGELOG.md and SECURITY.md are copied into the image but deliberately not
+# in the path filter: editing them alone does not rebuild.
+#
+# Tags: `latest`, `sha-<short commit>` and, on a manual run, an optional
+# extra tag (for example 1.5.10-jayden2).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mirobody/**"
+      - "frontend/**"
+      - "demo/seed/**"
+      - "scripts/build_backend.py"
+      - "docker/**"
+      - "Dockerfile"
+      - ".dockerignore"
+      - "pyproject.toml"
+      - "MANIFEST.in"
+      - "README.md"
+      - "LICENSE*"
+      - "config*.yaml"
+      - ".github/workflows/docker-hub-fork.yml"
+  workflow_dispatch:
+    inputs:
+      extra_tag:
+        description: Optional extra image tag, for example 1.5.10-jayden2
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+# A newer push supersedes a push build that is still running. A manual run
+# is never cancelled, and never cancels a push build.
+concurrency:
+  group: docker-hub-fork-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
+jobs:
+  publish:
+    # Only runs where the Docker Hub account is jayden4sudo, so the upstream
+    # repository (which has its own DOCKERHUB_USERNAME) skips it.
+    if: ${{ vars.DOCKERHUB_USERNAME == 'jayden4sudo' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      IMAGE: jayden4sudo/mirobody
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Compute tags and check credentials
+        id: meta
+        env:
+          EXTRA_TAG: ${{ inputs.extra_tag }}
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [[ -z "$DOCKERHUB_USERNAME" || -z "$DOCKERHUB_TOKEN" ]]; then
+            echo 'Set DOCKERHUB_USERNAME as a repository variable and DOCKERHUB_TOKEN as a repository secret.' >&2
+            exit 1
+          fi
+          tags="$IMAGE:sha-${GITHUB_SHA::7}"
+          # `latest` only ever follows main, even for a manual run on another branch.
+          if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+            tags="$tags"$'\n'"$IMAGE:latest"
+          fi
+          if [[ -n "$EXTRA_TAG" ]]; then
+            if [[ ! "$EXTRA_TAG" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
+              echo "Invalid Docker tag: $EXTRA_TAG" >&2
+              exit 1
+            fi
+            tags="$tags"$'\n'"$IMAGE:$EXTRA_TAG"
+          fi
+          {
+            echo "tags<<EOF"
+            echo "$tags"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and publish
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          # Own cache scope so this workflow never overwrites the release build's cache.
+          cache-from: type=gha,scope=fork
+          cache-to: type=gha,scope=fork,mode=max
+
+      - name: Inspect published platforms
+        run: docker buildx imagetools inspect "$IMAGE:sha-${GITHUB_SHA::7}"

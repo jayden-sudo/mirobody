@@ -591,13 +591,11 @@ class Config:
             days = 0
         if not 1 <= days <= 36500:
             raise ValueError("INGEST_BACKFILL_DAYS must be between 1 and 36500")
-        path = self.get_str("INGEST_REGISTRY_FILE")
-        if not path:
-            raise ValueError("INGEST_REGISTRY_FILE is required when INGEST_PUBLIC_KEY is set")
+        path = self.get_str("INGEST_REGISTRY_FILE")  # optional: unset, every metric is allowed as sent
         return {
             "public_key"    : load_public_key(pub),
             "audience"      : audience,
-            "registry"      : Registry.load(path),
+            "registry"      : Registry.load(path) if path else Registry.open(),
             "auto_create"   : self.get_bool("INGEST_AUTO_CREATE_USERS", True),
             "backfill_days" : days,
         }

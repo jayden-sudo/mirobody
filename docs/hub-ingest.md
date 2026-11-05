@@ -8,11 +8,11 @@ A trusted hub pushes device readings for sibian users. Off unless
 |---|---|
 | `INGEST_PUBLIC_KEY` | base64 of the hub's 32 raw Ed25519 public-key bytes |
 | `INGEST_AUDIENCE` | string both sides sign in (1-64 chars, no control characters) |
-| `INGEST_REGISTRY_FILE` | YAML metric registry (below) |
+| `INGEST_REGISTRY_FILE` | YAML metric registry (below). Optional. Unset, **every metric is accepted exactly as sent**: its name, unit and value are stored as given, with no unit conversion, range check, label check or day window. Set it for a real deployment so typos and wrong units are refused. With a file, only the metrics it lists are accepted |
 | `INGEST_AUTO_CREATE_USERS` | default `true`: open an account for an unseen sibian identity |
 | `INGEST_BACKFILL_DAYS` | default 4000: older readings are refused (`too-old`) |
 
-A set key with a bad audience, registry or day count stops the server at start.
+A set key with a bad audience, day count, or an unreadable/invalid registry file stops the server at start.
 
 ## Request
 Headers `X-Ingest-Timestamp` (unix s, ±300 s), `X-Ingest-Nonce` (base64url, no padding, 16-64 bytes, one use),
@@ -54,7 +54,7 @@ metrics:
     # allowed: [...]        # required for ordinal/nominal
     # censor: {LOW: "<2.2"} # quantity only: marker -> stored text
 ```
-Values are rendered deterministically (fixed decimals, `true`/`false`, NFC labels). Unknown metrics are refused;
+Values are rendered deterministically (without a registry file: numbers as plain decimals with trailing zeros dropped, so `58` and `58.0` are the same; strings trimmed; booleans `true`/`false`) (fixed decimals, `true`/`false`, NFC labels). Unknown metrics are refused;
 devices need no registration. Edit the file and restart.
 
 ## Idempotency

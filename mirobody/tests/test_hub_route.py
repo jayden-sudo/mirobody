@@ -308,3 +308,14 @@ def test_offset_tz_is_understood_by_the_writer_and_keeps_the_sleep_night_togethe
     late = datetime.fromisoformat("2026-11-04T23:30:00+08:00")
     early = datetime.fromisoformat("2026-11-05T02:00:00+08:00")
     assert standardize.local_day(late, tz, "18:00") == standardize.local_day(early, tz, "18:00")
+
+
+async def test_without_a_registry_file_any_metric_and_unit_is_written_as_sent(env):
+    client, _, st, app = env
+    app.state.hub["registry"] = Registry.open()
+    r = await post(client, body(sample("a", metric="brand new", value=3.5, unit="furlongs"),
+                                sample("b", metric="mood", value="calm", unit="")))
+    assert (r.status_code, r.json()["data"]["inserted"]) == (200, 2), r.text
+    d = {x.name_text: x for x in st.writes[0][1]}
+    assert (d["brand new"].value_text, d["brand new"].unit_text) == ("3.5", "furlongs")
+    assert (d["mood"].value_text, d["mood"].unit_text) == ("calm", "")

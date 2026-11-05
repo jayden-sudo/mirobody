@@ -122,7 +122,7 @@ async def ingest_batch(batch: Batch, *, registry: Registry, backfill_days: int,
                 refuse(d, s, str(exc))
                 continue
             ok.append((s, obs.Draft(
-                name_text=m.name, value_text=text, unit_text=m.unit,
+                name_text=m.name, value_text=text, unit_text=s.unit if m.kind == "any" else m.unit,
                 observed_start=start, observed_end=end, tz=tz, window=m.window,
                 source_record_id=f"{d.name}:{d.serial or '-'}:{s.id}")))
         prepared.append((d, ok))

@@ -7,8 +7,8 @@
   The hub signs each request with an Ed25519 key whose public half is
   `INGEST_PUBLIC_KEY`; a timestamp window and a one-time nonce stop replays;
   nothing touches the database before the signature is good. Metrics, units,
-  ranges and rounding come from a YAML registry (`INGEST_REGISTRY_FILE`), so a
-  new metric is a file edit. Writes are idempotent (`observations.ingest`,
+  ranges and rounding come from a YAML registry (`INGEST_REGISTRY_FILE`, optional:
+  unset, every metric is accepted as sent), so a new metric is a file edit. Writes are idempotent (`observations.ingest`,
   `amend`), and an account deleted by its owner is never reopened. Off (404)
   unless `INGEST_PUBLIC_KEY` is set. `user.find_external_user` is the new
   read-only identity lookup. How to tell: `mirobody/tests/test_hub_*.py`;

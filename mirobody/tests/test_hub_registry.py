@@ -123,6 +123,44 @@ def test_window_is_exposed(reg):
     assert reg.find("glucose").window == ""
 
 
+# ---- no registry file: every metric is accepted as sent --------------------------
+
+
+def test_open_registry_accepts_any_metric_and_keeps_its_unit():
+    reg = Registry.open()
+    m = reg.find("  Some New Metric ")
+    assert (m.name, m.kind) == ("Some New Metric", "any")
+    assert render(m, 58, "bpm") == "58" and render(m, 58.0, "bpm") == "58"        # same measurement, same text
+    assert render(m, 0.1 + 0.2, "") == "0.30000000000000004"
+    assert render(m, 1e21, "") == "1000000000000000000000" and render(m, -0.0, "") == "0"
+    assert render(m, True, "") == "true" and render(m, " 高 ", "") == "高"
+    assert render(m, 10**40, "u") == str(10**40)                                    # no bounds in open mode
+
+
+def test_registry_file_is_optional_in_the_server_config(monkeypatch, tmp_path):
+    import base64
+
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+    from mirobody.utils.config.config import Config
+    pub = base64.b64encode(Ed25519PrivateKey.generate().public_key().public_bytes_raw()).decode()
+    monkeypatch.setenv("INGEST_PUBLIC_KEY", pub)
+    monkeypatch.setenv("INGEST_AUDIENCE", "dev")
+    monkeypatch.delenv("INGEST_REGISTRY_FILE", raising=False)
+    opts = Config().get_hub_options()
+    assert opts["registry"].find("anything_at_all").kind == "any"                    # unset: everything is allowed
+    own = tmp_path / "r.yaml"
+    own.write_text("version: 1\nmetrics:\n  only_mine: {name: mine, kind: boolean, unit: ''}\n", encoding="utf-8")
+    monkeypatch.setenv("INGEST_REGISTRY_FILE", str(own))
+    opts = Config().get_hub_options()
+    assert opts["registry"].find("only_mine")                                        # a file: only what it lists
+    with pytest.raises(Reject, match="unknown-metric"):
+        opts["registry"].find("anything_at_all")
+    monkeypatch.setenv("INGEST_REGISTRY_FILE", str(tmp_path / "missing.yaml"))
+    with pytest.raises(OSError):                                                     # set but unusable is still an error
+        Config().get_hub_options()
+
+
 # ---- time -------------------------------------------------------------------------
 
 

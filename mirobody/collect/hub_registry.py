@@ -61,6 +61,8 @@ class Metric(BaseModel):
 
 
 class Registry:
+    is_open = False
+
     def __init__(self, metrics: dict[str, Metric]) -> None:
         self._by_name: dict[str, Metric] = {}
         for key, metric in metrics.items():
@@ -71,6 +73,13 @@ class Registry:
                 self._by_name[n] = metric
 
     @classmethod
+    def open(cls) -> Registry:
+        """No registry file: every metric is accepted as sent (no units, ranges or labels to check)."""
+        reg = cls({})
+        reg.is_open = True
+        return reg
+
+    @classmethod
     def load(cls, path: str) -> Registry:
         with open(path, encoding="utf-8") as fh:
             doc = YAML(typ="safe").load(fh)
@@ -79,14 +88,19 @@ class Registry:
         return cls({str(k): Metric.model_validate(v) for k, v in doc["metrics"].items()})
 
     def find(self, metric: str) -> Metric:
-        try:
-            return self._by_name[_nfc(metric)]
-        except KeyError:
-            raise Reject("unknown-metric") from None
+        name = _nfc(metric)
+        if name in self._by_name:
+            return self._by_name[name]
+        if self.is_open:  # kind "any" is built here only; a registry file cannot say it
+            return Metric.model_construct(name=name, aliases=[], kind="any", unit="", accept_units={}, decimals=None,
+                                          bounds=None, window="", allowed=[], censor={})
+        raise Reject("unknown-metric")
 
 
 def render(m: Metric, value: object, unit: str) -> str:
     """The text to store, identical for identical input."""
+    if m.kind == "any":
+        return _as_sent(value)
     factor = m.accept_units.get(unit)
     if factor is None:
         raise Reject("unknown-unit")
@@ -113,6 +127,15 @@ def render(m: Metric, value: object, unit: str) -> str:
     if m.bounds and not Decimal(str(m.bounds[0])) <= q <= Decimal(str(m.bounds[1])):
         raise Reject("out-of-range")
     return format(abs(q) if q == 0 else q, "f")
+
+
+def _as_sent(value: object) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, str):
+        return _nfc(value)
+    d = Decimal(str(value)).normalize()
+    return format(abs(d) if d == 0 else d, "f")
 
 
 _ISO = re.compile(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d{1,6})?)?(Z|[+-]\d{2}:\d{2})?")

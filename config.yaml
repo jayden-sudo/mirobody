@@ -166,7 +166,8 @@ JWT_SCOPE: "mcp:read mcp:write"
 
 # Device push (POST /api/v1/ingest/batch, docs/hub-ingest.md). Off until the
 # public key is set. Base64 of the hub's 32-byte Ed25519 public key; the
-# audience the hub signs in; the YAML file naming the metrics it may push.
+# audience the hub signs in; optionally a YAML file naming the metrics it may push
+# (unset: every metric is accepted as sent, no checks: for local trials).
 # INGEST_PUBLIC_KEY: ""
 # INGEST_AUDIENCE: mirobody-dev
 # INGEST_REGISTRY_FILE: /path/to/hub_registry.yaml

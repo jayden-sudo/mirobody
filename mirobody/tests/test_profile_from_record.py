@@ -307,15 +307,53 @@ async def test_a_timed_out_refresh_is_not_retried(monkeypatch):
     model server still writing the first."""
     monkeypatch.setattr(profile.UserProfileService, "create_user_profile",
                         AsyncMock(return_value={"status": "timed_out"}))
+    _live_accounts(monkeypatch)
 
     await ProfileRefreshTask(pg_config=None).consume(["5"])
 
 
 async def test_a_failed_refresh_is_still_retried(monkeypatch):
     monkeypatch.setattr(profile.UserProfileService, "create_user_profile", AsyncMock(return_value={"status": "error"}))
+    _live_accounts(monkeypatch)
 
     with pytest.raises(RuntimeError):
         await ProfileRefreshTask(pg_config=None).consume(["5"])
+
+
+def _live_accounts(monkeypatch, closed=()):
+    """The refresh looks each account up, uncached, before it starts: these accounts are live, `closed` ones are not."""
+    from mirobody.user import user as account
+
+    async def get_user(*, user_id=None, email=None):
+        return None if str(user_id) in closed else {"id": int(user_id)}
+
+    monkeypatch.setattr(account, "get_user", get_user)
+
+
+async def test_a_refresh_skips_an_account_erased_while_its_job_waited(monkeypatch):
+    refresh = AsyncMock(return_value={"status": "success"})
+    monkeypatch.setattr(profile.UserProfileService, "create_user_profile", refresh)
+    _live_accounts(monkeypatch, closed={"5"})
+
+    await ProfileRefreshTask(pg_config=None).consume(["5", "6"])
+
+    assert [c.args[0] for c in refresh.await_args_list] == ["6"]
+
+
+async def test_a_failed_account_lookup_does_not_stop_the_refresh(monkeypatch):
+    from mirobody.user import user as account
+
+    refresh = AsyncMock(return_value={"status": "success"})
+    monkeypatch.setattr(profile.UserProfileService, "create_user_profile", refresh)
+
+    async def down(**kw):
+        raise ConnectionError("db down")
+
+    monkeypatch.setattr(account, "get_user", down)
+
+    await ProfileRefreshTask(pg_config=None).consume(["5"])
+
+    assert [c.args[0] for c in refresh.await_args_list] == ["5"]
 
 
 async def test_a_reply_cut_at_max_tokens_is_returned_and_logged(monkeypatch, caplog):

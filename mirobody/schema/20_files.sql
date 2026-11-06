@@ -36,3 +36,13 @@ CREATE INDEX IF NOT EXISTS idx_th_files_created_at               ON th_files (cr
 CREATE INDEX IF NOT EXISTS idx_th_files_content_hash             ON th_files (content_hash);
 
 COMMENT ON COLUMN th_files.content_hash IS 'SHA256 of raw file bytes; dedup key for original_text extraction';
+
+-- Object keys whose file rows were erased with an account (user/erase.py) and
+-- whose bytes are still in storage. The row is written in the same transaction
+-- as the erasure, so a failed or interrupted delete can be retried; there is no
+-- user id on purpose: the person it belonged to no longer has an account.
+CREATE TABLE IF NOT EXISTS th_storage_purge (
+    file_key   varchar(255) PRIMARY KEY,
+    created_at timestamptz  NOT NULL DEFAULT now(),
+    attempts   integer      NOT NULL DEFAULT 0
+);

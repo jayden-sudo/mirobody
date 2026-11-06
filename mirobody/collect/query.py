@@ -44,12 +44,14 @@ agreeing.
 
 from __future__ import annotations
 
+import base64
+import json
 import logging
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from mirobody import standardize
-from mirobody.kernel import query
+from mirobody.kernel import metrics, query
 from mirobody.kernel.ops import is_driver_exception
 from mirobody.kernel.tools import PROVENANCE_REPORTED
 from mirobody.collect.observations import (
@@ -57,6 +59,7 @@ from mirobody.collect.observations import (
     KIND_MEASUREMENT,
     KIND_NOTE,
     KIND_SYMPTOM,
+    MODALITY_DEVICE,
     MODALITY_UNVERIFIED,
     contains_pattern,
     user_tz,
@@ -223,6 +226,10 @@ _WRITTEN_SINCE = "FROM v_observation v WHERE v.user_id = :uid AND v.created_at >
 
 #: What the web's records table may ask for in one page.
 RECORDS_PAGE_MAX = 200
+TIMELINE_PAGE_MAX = 200
+_LOINC_SYSTEM = "http://loinc.org"
+#: What the journal writes under (`journal_router.SOURCE_REF`): a memo already lists those readings.
+JOURNAL_SOURCE_REF = "journal"
 
 #: The columns an export of records carries, in order. A whitelist, not
 #: "whatever the row has": a field added to the row later does not leave in a
@@ -314,7 +321,7 @@ class PostgresHealthQuery:
                    {_LOCAL_TIME} AS local_time,
                    o.observed_start, o.observed_end,
                    o.local_date, o.modality, o.code_system, o.code, o.elected, o.outcome,
-                   o.source_kind, p.period_start,
+                   o.source_kind, o.vendor, o.source_ref, p.period_start,
                    {_REPORTED_COLUMNS},
                    {_FILE_KEY} AS file_key, {_FILE_NAME}{comment}"""
         where = " AND ".join(conditions)
@@ -357,6 +364,104 @@ class PostgresHealthQuery:
             "total": total,
             "has_more": params["offset"] + len(rows) < total,
         }
+
+    async def timeline(
+        self, subject_id: str, *, start: date, end: date, limit: int = 100, cursor: str | None = None
+    ) -> dict[str, Any]:
+        """One chronological list for a person's whole record, newest day first.
+
+        Only readings coded to a standard code (LOINC) appear. A device's readings are collapsed: every
+        (series, local day, unit, source) is ONE `day` entry (n, avg/min/max for numbers, the newest value), even
+        when it holds a single reading, so an entry never changes shape as the day fills up. Everything else (a
+        typed value, a lab report, a self report) is a `reading` entry of its own.
+
+        Order: newest local day first; inside a day the summaries, then the readings newest first. Both keys are
+        fixed by the entry itself (a summary's position is its day and its id, never the time of its newest
+        reading), so paging by `cursor` neither skips nor repeats an entry when readings arrive meanwhile.
+        `start`/`end` are local dates (inclusive), the days the stored `local_date` already holds, so a row keeps
+        the day of its own zone. A malformed `cursor` raises ValueError.
+        """
+        params: dict[str, Any] = {
+            "uid": str(subject_id), "start": start, "end": end, "limit": max(1, min(int(limit), TIMELINE_PAGE_MAX)),
+            "loinc": _LOINC_SYSTEM, "device": MODALITY_DEVICE, "journal": JOURNAL_SOURCE_REF,
+            "has_cursor": cursor is not None, "c_date": date.min, "c_rank": 0, "c_ts": datetime.min.replace(tzinfo=UTC), "c_id": "",
+        }
+        if cursor is not None:
+            try:
+                c_date, c_rank, c_ts, c_id = json.loads(base64.urlsafe_b64decode(cursor + "=" * (-len(cursor) % 4)))
+                params.update(c_date=date.fromisoformat(c_date), c_rank=int(c_rank),
+                              c_ts=datetime.fromisoformat(c_ts).replace(tzinfo=UTC), c_id=str(c_id))
+            except (ValueError, TypeError, KeyError) as exc:
+                raise ValueError("cursor is not valid") from exc
+        rows = await execute_query(
+            f"""
+            WITH base AS (
+                SELECT o.id, o.series_id, o.display, o.display_zh, o.name_text, o.value_text, o.unit_text, o.ref_text,
+                       o.flag_text, o.value_num, o.value_kind, o.local_date, o.observed_start,
+                       {_LOCAL_TIME} AS local_time, o.modality, o.source_kind, o.vendor, o.source_ref,
+                       o.code_system, o.code, o.elected,
+                       {_FILE_KEY} AS file_key, {_FILE_NAME}
+                  FROM v_observation o
+                {_FILE_JOIN}
+                 WHERE o.user_id = :uid AND o.kind = 'measurement' AND o.code_system = :loinc
+                   AND o.local_date BETWEEN :start AND :end
+                   AND o.source_ref <> :journal
+            ), entries AS (
+                SELECT 'reading' AS entry_kind, 1 AS rank, b.observed_start AS sort_ts, b.id::text AS entry_id,
+                       b.local_date, b.local_time, b.series_id, b.display, b.display_zh, b.name_text, b.value_text,
+                       b.unit_text, b.ref_text, b.flag_text, b.modality, b.source_kind, b.vendor, b.source_ref,
+                       b.code_system, b.code, b.elected, b.file_key, b.file_name, b.id AS row_id,
+                       1 AS n, NULL::numeric AS avg, NULL::numeric AS min, NULL::numeric AS max, NULL::numeric AS sum
+                  FROM base b
+                 WHERE b.modality <> :device
+                UNION ALL
+                SELECT 'day', 0, 'epoch'::timestamptz,
+                       md5(b.series_id || '|' || b.local_date::text || '|' || b.unit_text || '|' || COALESCE(b.vendor, b.source_kind)),
+                       b.local_date,
+                       (ARRAY_AGG(b.local_time ORDER BY b.observed_start DESC, b.id DESC))[1],
+                       b.series_id,
+                       (ARRAY_AGG(b.display ORDER BY b.observed_start DESC, b.id DESC))[1],
+                       (ARRAY_AGG(b.display_zh ORDER BY b.observed_start DESC, b.id DESC))[1],
+                       (ARRAY_AGG(b.name_text ORDER BY b.observed_start DESC, b.id DESC))[1],
+                       (ARRAY_AGG(b.value_text ORDER BY b.observed_start DESC, b.id DESC))[1],
+                       b.unit_text, '', '',
+                       (ARRAY_AGG(b.modality ORDER BY b.observed_start DESC, b.id DESC))[1],
+                       (ARRAY_AGG(b.source_kind ORDER BY b.observed_start DESC, b.id DESC))[1],
+                       (ARRAY_AGG(b.vendor ORDER BY b.observed_start DESC, b.id DESC))[1],
+                       (ARRAY_AGG(b.source_ref ORDER BY b.observed_start DESC, b.id DESC))[1],
+                       (ARRAY_AGG(b.code_system ORDER BY b.observed_start DESC, b.id DESC))[1],
+                       (ARRAY_AGG(b.code ORDER BY b.observed_start DESC, b.id DESC))[1],
+                       false, NULL, NULL, NULL::bigint,
+                       COUNT(*)::int,
+                       AVG(b.value_num) FILTER (WHERE b.value_kind = 'quantity'),
+                       MIN(b.value_num) FILTER (WHERE b.value_kind = 'quantity'),
+                       MAX(b.value_num) FILTER (WHERE b.value_kind = 'quantity'),
+                       SUM(b.value_num) FILTER (WHERE b.value_kind = 'quantity')
+                  FROM base b
+                 WHERE b.modality = :device
+                 GROUP BY b.series_id, b.local_date, b.unit_text, COALESCE(b.vendor, b.source_kind)
+            )
+            SELECT *, to_char(sort_ts AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') AS sort_iso
+              FROM entries
+             WHERE NOT :has_cursor
+                OR local_date < :c_date
+                OR (local_date = :c_date AND (rank > :c_rank
+                    OR (rank = :c_rank AND (sort_ts < :c_ts OR (sort_ts = :c_ts AND entry_id < :c_id)))))
+             ORDER BY local_date DESC, rank ASC, sort_ts DESC, entry_id DESC
+             LIMIT :fetch
+            """,
+            {**params, "fetch": params["limit"] + 1},
+            log_sql=False,
+        ) or []
+        more = len(rows) > params["limit"]
+        rows = rows[: params["limit"]]
+        out = [_timeline_row(r) for r in rows]
+        next_cursor = None
+        if more and rows:
+            last = rows[-1]
+            key = [str(last["local_date"]), int(last["rank"]), last["sort_iso"], last["entry_id"]]
+            next_cursor = base64.urlsafe_b64encode(json.dumps(key).encode()).decode().rstrip("=")
+        return {"rows": out, "has_more": more, "next_cursor": next_cursor}
 
     async def _records_total(self, where: str, params: dict[str, Any], *, since: bool) -> int:
         if since:
@@ -456,6 +561,12 @@ class PostgresHealthQuery:
                    to_char(MAX(o.local_date), 'YYYY-MM-DD') AS last_date,
                    (ARRAY_AGG(o.value_text ORDER BY o.observed_start DESC))[1] AS latest_value,
                    (ARRAY_AGG(o.unit_text ORDER BY o.observed_start DESC))[1] AS unit,
+                   (ARRAY_AGG({_LOCAL_TIME} ORDER BY o.observed_start DESC))[1] AS last_time,
+                   (ARRAY_AGG(o.source_kind ORDER BY o.observed_start DESC))[1] AS last_source_kind,
+                   (ARRAY_AGG(o.modality ORDER BY o.observed_start DESC))[1] AS last_modality,
+                   (ARRAY_AGG(o.vendor ORDER BY o.observed_start DESC))[1] AS last_vendor,
+                   (ARRAY_AGG(o.source_ref ORDER BY o.observed_start DESC))[1] AS last_source_ref,
+                   COUNT(DISTINCT COALESCE(o.vendor, o.source_kind)) AS source_count,
                    MAX(o.reason) AS reason,
                    bool_or(o.modality = '{MODALITY_UNVERIFIED}') AS unverified,
                    bool_or(o.kind = ANY(:reported)) AS reported
@@ -490,7 +601,8 @@ class PostgresHealthQuery:
                 SELECT o.id, o.series_id, o.display, o.name_text, o.value_text, o.unit_text,
                        o.ref_text, o.flag_text, o.value_num, o.value_canonical, o.unit_canonical, o.comparator,
                        {_LOCAL_TIME} AS local_time,
-                       o.tz, o.local_date, o.modality, o.code_system, o.code, o.elected, o.outcome,
+                       o.tz, o.local_date, o.modality, o.source_kind, o.vendor, o.source_ref,
+                       o.code_system, o.code, o.elected, o.outcome,
                        {_REPORTED_COLUMNS},
                        {_FILE_KEY} AS file_key, {_FILE_NAME},
                        COUNT(*) OVER (PARTITION BY o.series_id) AS total,
@@ -603,6 +715,7 @@ class PostgresHealthQuery:
             SELECT DISTINCT ON (o.series_id)
                    o.id, o.series_id, o.display, o.name_text, o.value_text, o.unit_text, o.ref_text, o.flag_text, o.value_num,
                    o.value_canonical, o.unit_canonical, o.code_system, o.code, o.local_date, o.elected, o.modality,
+                   o.source_kind, o.vendor, o.source_ref,
                    o.outcome, {_REPORTED_COLUMNS},
                    {_FILE_KEY} AS file_key, {_FILE_NAME},
                    {_LOCAL_TIME} AS local_time
@@ -880,9 +993,23 @@ def _reported(r: dict) -> dict:
     }
 
 
+def _policy(r: dict) -> str:
+    """How the catalogue says this metric's readings combine over a day (mean_min_max, sum_delta, ...), or ''."""
+    metric = metrics.by_loinc(r.get("code") or "") if r.get("code_system") == _LOINC_SYSTEM else None
+    return metric.aggregation_policy if metric else ""
+
+
+def _zh(r: dict) -> dict:
+    """The Simplified-Chinese name of a LOINC-coded series, and whether it is a machine translation."""
+    hit = metrics.zh_for_loinc(r.get("code") or "") if r.get("code_system") == _LOINC_SYSTEM else None
+    return {"indicator_zh": hit[0] if hit else "", "zh_machine": bool(hit and hit[1])}
+
+
 def _catalog_row(r: dict) -> dict:
     return {
         **_identity(r),
+        **_zh(r),
+        "policy": _policy(r),
         "standard": bool(r.get("standard")),
         "name": r.get("name") or "",
         "kind": r.get("kind") or "",
@@ -891,6 +1018,16 @@ def _catalog_row(r: dict) -> dict:
         "latest_value": _shown(r.get("latest_value"), r.get("unit")),
         "first_date": r.get("first_date") or "",
         "last_date": r.get("last_date") or "",
+        # When the newest reading was taken (wall clock) and where it came from; `source_count` is how many
+        # distinct sources (a vendor, else the kind of source) feed the series.
+        "last_time": _text(r.get("last_time")),
+        "last_source": {
+            "source_kind": r.get("last_source_kind") or "",
+            "modality": r.get("last_modality") or "",
+            "vendor": r.get("last_vendor") or "",
+            "source_ref": r.get("last_source_ref") or "",
+        },
+        "source_count": int(r.get("source_count") or 0),
         "total": int(r.get("total") or 0),
         "reason": r.get("reason") or "",
         "day_known": True,
@@ -922,6 +1059,11 @@ def _reading_row(r: dict) -> dict:
         "file_key": r.get("file_key") or "",
         "row_id": r.get("id"),
         "modality": r.get("modality") or "",
+        # Where the reading came from: the kind of source, the vendor (a device pushed by a hub is `hub.<name>`)
+        # and the source's own reference (`hub:<name>:<serial>`, a file key, ...). Empty when the row has none.
+        "source_kind": r.get("source_kind") or "",
+        "vendor": r.get("vendor") or "",
+        "source_ref": r.get("source_ref") or "",
         "total": int(r.get("total") or 0),
         "day_known": True,
         "provenance": "elected:day_authority" if r.get("elected") else "measured",
@@ -1022,6 +1164,44 @@ def _number(value: object) -> float | None:
         return float(value)  # type: ignore[arg-type]
     except (TypeError, ValueError):
         return None
+
+
+def _timeline_row(r: dict) -> dict:
+    day = r["entry_kind"] == "day"
+    value = _shown(r.get("value_text"), r.get("unit_text"))
+    row = {
+        "kind": r["entry_kind"],
+        "entry_id": r["entry_id"],
+        "indicator": r.get("display") or r.get("name_text") or "",
+        **_zh(r),
+        "name": r.get("name_text") or "",
+        "system": r.get("code_system") or "",
+        "code": r.get("code") or "",
+        "series": r.get("series_id") or "",
+        "local_date": _text(r.get("local_date")),
+        "time": _text(r.get("local_time")),
+        "value": value,
+        "unit": r.get("unit_text") or "",
+        "modality": r.get("modality") or "",
+        "source_kind": r.get("source_kind") or "",
+        "vendor": r.get("vendor") or "",
+        "source_ref": r.get("source_ref") or "",
+        "n": int(r.get("n") or 1),
+        "policy": _policy(r),
+    }
+    if day:
+        row.update({"avg": _number(r.get("avg")), "min": _number(r.get("min")), "max": _number(r.get("max")),
+                    "sum": _number(r.get("sum"))})
+    else:
+        row.update({
+            "row_id": r.get("row_id"),
+            "ref": r.get("ref_text") or "",
+            "flag": r.get("flag_text") or "",
+            "file": _text(r.get("file_name")) or (r.get("file_key") or ""),
+            "file_key": r.get("file_key") or "",
+            "provenance": "elected:day_authority" if r.get("elected") else "measured",
+        })
+    return row
 
 
 def _record_row(r: dict) -> dict:

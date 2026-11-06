@@ -57,6 +57,22 @@ metrics:
 Values are rendered deterministically (without a registry file: numbers as plain decimals with trailing zeros dropped, so `58` and `58.0` are the same; strings trimmed; booleans `true`/`false`) (fixed decimals, `true`/`false`, NFC labels). Unknown metrics are refused;
 devices need no registration. Edit the file and restart.
 
+## Showing up in Hygieia (and in health queries)
+mirobody codes a device reading by its **name**: a name in `res/catalog/metrics.tsv` gets that row's LOINC; any other
+name is stored as `mirobody-device:<name>` (kept, listed by keyword, but with no standard code). The Hygieia home board
+asks for codes, so only these names appear there:
+
+| Board card | `metric` / registry `name` | LOINC |
+| --- | --- | --- |
+| Sleep | `dailyTotalSleepTime` (or `sleepAnalysis_Asleep(Unspecified)`) | 93832-4 |
+| Steps | `dailySteps` (or `steps`) | 41950-7 (55423-8) |
+| Resting heart rate | `restingHeartRates` | 40443-4 |
+| HRV | `hrvSDNN` | 112429-6 |
+| Weight | `bodyMasss` (three s) | 29463-7 |
+
+With no registry file, send these names as `metric`. With a registry file, keep friendly keys or aliases but set
+`name:` to the catalog name. Units are converted for queries from the unit you send (`min`, `h`, `kg`, `/min`, `ms`, `count`).
+
 ## Idempotency
 A row's identity is (subject, metric, start, end, `hub:{device}:{serial|-}`, `{device}:{serial|-}:{id}`). Resend
 the same batch with the same ids, times, device name/serial and `tz` form: identical rows are `skipped`, a changed

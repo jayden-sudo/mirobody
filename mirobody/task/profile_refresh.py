@@ -29,7 +29,24 @@ class ProfileRefreshTask(BaseTask):
         # Lazy import breaks mirobody.task ↔ mirobody.agent.chat/pulse cycle.
         from mirobody.user.profile import UserProfileService
 
-        user_ids = {m for m in messages if m}
+        from mirobody.user.user import get_user
+
+        # An account erased while its job waited: nothing to refresh, and nothing
+        # must be written under an id that was closed. The lookup is uncached
+        # (`is_active_account` trusts a cached answer for 30 s).
+        user_ids = set()
+        for m in messages:
+            if not m:
+                continue
+            try:
+                if await get_user(user_id=m) is not None:
+                    user_ids.add(m)
+            except ValueError:
+                continue  # not an account id
+            except Exception as e:
+                # A lookup that fails is not a closed account: an outage must not stop refreshes.
+                logger.warning("profile_refresh: account lookup failed, refreshing anyway: error_type=%s", type(e).__name__)
+                user_ids.add(m)
         if not user_ids:
             return
 

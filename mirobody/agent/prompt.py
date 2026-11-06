@@ -2,7 +2,7 @@
 that announces this turn's attachments.
 
 `build_system_prompt` renders the configured template (`PROMPTS`) with the
-tool descriptions, the time in the user's zone and the user context.
+tool descriptions and the user context.
 Rendering is strict: a variable the template names and the harness does not
 supply raises, and `MirobodyAgent._build_system_prompt` turns that into the
 `AgentError` the client sees, naming the exception's type. The alternative,
@@ -116,8 +116,11 @@ def turn_note(timezone: str, question: str) -> str:
     moment = _now(timezone)
     template = _TURN_NOTES.get(question_language(question))
     if template:
-        return template.format(now=moment.strftime("%Y-%m-%d %H:00 %Z (UTC%z)"))
-    return f"[System note: it is now {moment.strftime('%A, %B %d, %Y, at %I:00 %p %Z (UTC%z)')}.]"
+        return template.format(now=moment.strftime("%Y-%m-%d %H:%M %Z (UTC%z)"))
+    return (
+        f"[System note: it is now {moment.strftime('%A, %B %d, %Y, at %I:%M %p %Z (UTC%z)')}. "
+        "Write the whole reply, thinking included, in the language of the question that follows.]"
+    )
 
 
 async def build_system_prompt(
@@ -132,8 +135,9 @@ async def build_system_prompt(
     knowledge: Mapping[str, str] | None = None,
     deployment_facts: str = "",
 ) -> str:
-    """Render `base_prompt` with tool descriptions, the current time in
-    `timezone`, and the user context the template may reference.
+    """Render `base_prompt` with tool descriptions and the user context the
+    template may reference. The shipped template leaves the time to the turn
+    note (`turn_note`), so the prompt stays a fixed prefix.
     `record_owner` names whose record it is when that is not the asker's;
     `answer_language` the latest question's language (`question_language`);
     `knowledge` the medical-knowledge scopes this deployment has, by name;
@@ -147,7 +151,11 @@ async def build_system_prompt(
     if tools_description:
         tools_description += "\n\n---\n\n"
 
-    current_time = _now(timezone).strftime("%A, %B %d, %Y, at %I:00 %p %Z (UTC%z)")
+    # Not used by the shipped template (the time travels in the turn note, so the
+    # prompt stays a fixed prefix). Still passed, to the minute: rendering is
+    # strict, and a deployment's own `PROMPTS` template that names it would
+    # otherwise fail every turn.
+    current_time = _now(timezone).strftime("%A, %B %d, %Y, at %I:%M %p %Z (UTC%z)")
 
     template = prompts.environment(enable_async=True).from_string(base_prompt)
     return await template.render_async(

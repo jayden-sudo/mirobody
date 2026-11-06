@@ -33,9 +33,9 @@ added and what this catalogue now carries:
 
 This module is part of the *library layer* (see the import-linter contracts
 in ``pyproject.toml``): stdlib only, importable on a bare ``pip install
-mirobody``. Display labels in other languages are NOT here: an
-international project ships English names and lets each deployment inject
-its own (``register_labels``). Per-vendor overrides of a metric's shape are
+mirobody``. The catalogue itself is English. Chinese names ship as
+resources and are read only by ``zh_for_loinc`` and ``search``; any other
+language is injected by the deployment (``register_labels``). Per-vendor overrides of a metric's shape are
 injected the same way (``register_overrides``); the catalogue never learns a
 vendor's field paths.
 """
@@ -285,6 +285,74 @@ def load_labels_resource(locale: str) -> None:
     register_labels(locale, table)
 
 
+_zh_by_loinc: dict[str, tuple[str, bool]] | None = None
+
+
+def zh_for_loinc(code: str) -> tuple[str, bool] | None:
+    """The Simplified-Chinese name of a LOINC code and whether it is a machine translation, or None.
+
+    Names come from ``res/catalog/labels/zh.tsv`` (hand written) first, then ``zh-auto.tsv`` (machine
+    translated, to be shown as such). When several catalogue members share one LOINC code the first one in
+    catalogue order that has a hand-written name wins, else the first with a machine name."""
+    global _zh_by_loinc
+    if _zh_by_loinc is None:
+        curated = {r["key"]: r["label"] for r in _read_tsv("catalog/labels/zh.tsv") if r.get("label")}
+        auto = {r["key"]: r["label"] for r in _read_tsv("catalog/labels/zh-auto.tsv") if r.get("label")}
+        table: dict[str, tuple[str, bool]] = {}
+        for m in ROWS:
+            if not m.loinc or m.confidence not in ("confident", "unverified"):
+                continue
+            if m.member in curated and (m.loinc not in table or table[m.loinc][1]):
+                table[m.loinc] = (curated[m.member], False)
+            elif m.member in auto and m.loinc not in table:
+                table[m.loinc] = (auto[m.member], True)
+        _zh_by_loinc = table
+    return _zh_by_loinc.get(code)
+
+
+_SEARCH_MAX = 50
+_by_loinc: dict[str, Metric] | None = None
+
+
+def by_loinc(code: str) -> Metric | None:
+    """The catalogue row that stands for a confidently coded LOINC (the first one in catalogue order), or None."""
+    global _by_loinc
+    if _by_loinc is None:
+        _by_loinc = {}
+        for m in ROWS:
+            if m.loinc and m.confidence == "confident":      # an unverified code is evidence, not an identity
+                _by_loinc.setdefault(m.loinc, m)
+    return _by_loinc.get(code)
+
+
+
+def search(query: str, limit: int = 20) -> list[dict]:
+    """Confidently coded catalogue metrics matching ``query`` (Chinese or English name, LOINC code, category), best first.
+
+    One result per LOINC code, whatever number of catalogue members share it. Matching is a case-insensitive
+    substring; exact code or name beats a prefix, which beats a substring elsewhere. Global metadata only."""
+    q = " ".join((query or "").split()).casefold()
+    if not q:
+        return []
+    seen: dict[str, tuple[int, dict]] = {}
+    for m in ROWS:
+        if not m.loinc or m.confidence != "confident" or m.loinc in seen:
+            continue
+        zh = zh_for_loinc(m.loinc)
+        fields = [m.loinc.casefold(), (zh[0] if zh else "").casefold(), m.display.casefold(), m.name.casefold(),
+                  m.category.casefold()]
+        if not any(q in f for f in fields):
+            continue
+        score = 0 if q in (fields[0], fields[1], fields[2]) else 1 if any(f.startswith(q) for f in fields[:4]) else 2
+        seen[m.loinc] = (score, {
+            "code": m.loinc, "system": "http://loinc.org", "name": m.name, "display": m.display,
+            "display_zh": zh[0] if zh else "", "zh_machine": bool(zh and zh[1]), "category": m.category,
+            "standard_unit": m.standard_unit, "unit_ucum": m.unit_ucum, "data_type": m.data_type,
+        })
+    ranked = sorted(seen.values(), key=lambda t: (t[0], len(t[1]["display"]), t[1]["code"]))
+    return [row for _, row in ranked[: max(1, min(int(limit), _SEARCH_MAX))]]
+
+
 def with_shape(metric: Metric, state_class: str, policy: str) -> Metric:
     """A copy of ``metric`` with another shape: for a consumer building its
     own override table from catalogue rows."""
@@ -304,5 +372,5 @@ __all__ = [
     "LEGAL_POLICIES", "SYSTEM_LOINC", "SYSTEM_DEVICE", "DATA_SUMMARY", "DATA_SERIES", "DATA_MIX",
     "Metric", "Mapping", "ROWS", "MEMBERS", "METRICS", "CATEGORIES",
     "canonical", "mapping_for", "register_overrides", "register_labels", "label", "description",
-    "load_labels_resource", "with_shape", "iter_names",
+    "load_labels_resource", "zh_for_loinc", "by_loinc", "search", "with_shape", "iter_names",
 ]

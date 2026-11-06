@@ -224,13 +224,21 @@ class MirobodyAgent:
         raise AgentError("No prompt template is configured (check PROMPTS in config)")
 
 
-    async def _turn_note(self, backend: Any, file_list: list[dict[str, Any]] | None, messages: list) -> str:
+    async def _turn_note(
+        self, backend: Any, file_list: list[dict[str, Any]] | None, messages: list, user_id: str = ""
+    ) -> str:
         """What a new turn's question is sent with: the attachments note, if
-        any, then the time and the answer language (`turn_note`), in the
-        question's language and last, so the words before the question are in
-        it. Kept out of the system prompt so it and the tools stay a fixed prefix."""
+        any, then the person's current state read from the record (`state.py`),
+        then the time and the answer language (`turn_note`), in the question's
+        language and last, so the words before the question are in it. Kept out
+        of the system prompt so it and the tools stay a fixed prefix; the state
+        block is English, so it must not come after the language note."""
+        from .clock import now as _now
+        from .state import state_block
+
         reminder = await attachment_reminder(backend, file_list)
-        return "\n\n".join(p for p in (reminder, turn_note(self.timezone, _latest_question(messages))) if p)
+        state = await state_block(user_id, _now(self.timezone))
+        return "\n\n".join(p for p in (reminder, state, turn_note(self.timezone, _latest_question(messages))) if p)
 
     async def _build_system_prompt(
         self,
@@ -744,7 +752,7 @@ class MirobodyAgent:
             if resume is None:
                 # The turn's note (time, answer language, attachments) is a
                 # message of this turn, not part of the cached system prompt.
-                final_messages = with_turn_note(final_messages, await self._turn_note(backend, file_list, messages))
+                final_messages = with_turn_note(final_messages, await self._turn_note(backend, file_list, messages, user_id))
 
             async for event in self._stream_agent_response(
                 agent=agent,

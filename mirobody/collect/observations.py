@@ -140,6 +140,8 @@ FINGERPRINT_FIELDS = (
 
 _ALIAS_SCOPE_GLOBAL = "global"
 _ALIAS_SCOPE_CATALOG = "catalog"
+#: `vendor_field` prefix that records a standard code the caller chose for a reading.
+_CHOSEN_CODE = "code:"
 
 
 @dataclass(frozen=True)
@@ -178,6 +180,9 @@ class Draft:
     #: This row's own modality when it differs from its batch's: an extracted
     #: value the document's text does not bear out (`MODALITY_UNVERIFIED`).
     modality: str = ""
+    #: A standard (LOINC) code the caller chose for this reading: the reading is filed under exactly it,
+    #: whatever its name says. Empty means the vocabulary decides.
+    code: str = ""
 
 
 @dataclass(frozen=True)
@@ -286,7 +291,9 @@ def prepare(
         "source_record_id": _clean(draft.source_record_id) or None,
         "row_ix": draft.row_ix,
         "vendor": provenance.vendor,
-        "vendor_field": draft.vendor_field,
+        # The identifier the source sent; for a reading filed under a code the caller chose it is `code:<LOINC>`,
+        # which survives a correction and a re-code because both read it back (`coding_for`).
+        "vendor_field": f"code:{_clean(draft.code)}" if _clean(draft.code) else draft.vendor_field,
         "derived_from": list(draft.derived_from) if draft.derived_from else None,
         "member_of": draft.member_of,
         "panel_text": _clean(draft.panel_text),
@@ -361,6 +368,9 @@ def coding_for(row: dict[str, Any], aliases: dict[tuple[str, str], standardize.A
         return standardize.resolve_condition(row["name_text"], alias=alias)
     if row["kind"] == KIND_NOTE:
         return standardize.code_note()
+    chosen = (row.get("vendor_field") or "")[len(_CHOSEN_CODE):] if (row.get("vendor_field") or "").startswith(_CHOSEN_CODE) else ""
+    if chosen and metrics.by_loinc(chosen) is not None:         # only a code the catalogue knows; anything else is plain text
+        alias = standardize.Alias(_ALIAS_SCOPE_CATALOG, standardize.LOINC_SYSTEM, chosen)
     if alias is None and row["source_kind"] == SOURCE_DEVICE:
         alias = catalog_alias(row["name_text"]) or standardize.Alias(
             _ALIAS_SCOPE_CATALOG, metrics.SYSTEM_DEVICE, row["name_text"].split(".", 1)[0]
@@ -1053,7 +1063,7 @@ async def merge_accounts(cur: Any, losing_user_id: str, winning_user_id: str) ->
 
 _SELECT_FOR_RECODE = """
 SELECT o.id, o.kind, o.name_text, o.name_key, o.local_key, o.value_kind, o.value_text, o.unit_text, o.unit_ucum,
-       o.value_num, o.source_kind, o.series_id, o.decision_id, o.release, o.outcome, o.code_system, o.code
+       o.value_num, o.source_kind, o.vendor_field, o.series_id, o.decision_id, o.release, o.outcome, o.code_system, o.code
   FROM v_observation o
  WHERE o.user_id = :user_id AND o.id > :after {name_filter}
  ORDER BY o.id

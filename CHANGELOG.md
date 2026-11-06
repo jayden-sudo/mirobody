@@ -1,6 +1,55 @@
 ## Unreleased
 
+### Changed
+
+- **The chat carries the person's current state, read from the record every turn.** Each new turn's
+  note now holds a short English block with the latest height and weight (and the BMI worked out from
+  them), the medications taken now and the conditions the person reported, built by
+  `mirobody/agent/state.py` from the stored readings, plans and journal rows, not from the standing
+  profile summary (which is refreshed only when a document or an ingest arrives, and has never held
+  height, weight or medications). It is stamped with its time, placed before the language note, and the
+  system prompt tells the model it is data and that only the latest block counts. A source that fails
+  or takes over 1.5 s leaves its line out; names are cleaned and never logged. The turn note's time is
+  now to the minute (it was cut to the hour), a question in a language the harness cannot read from its
+  script (French, Spanish, ...) is told to be answered in its own language, and the template's default of
+  American English applies only when the question gives no language signal. `current_time` is still
+  passed to templates (to the minute) for deployments whose own `PROMPTS` template names it; the shipped
+  template does not use it. How to tell: `mirobody/tests/test_chat_state.py`.
+
 ### Added
+
+- **Erase everything about the caller: `POST /api/v1/user/erase`.** Body `{"confirm": "erase-all-my-data"}`;
+  caller only (no `target_user_id`, a care-circle grant does not reach it). One transaction locks the
+  account, refuses one that manages other accounts (409), deletes the caller's rows from every table that
+  holds them (records and their coding, medications, genotypes, files, chat, the generated profile, device
+  credentials and data, personal MCP links, passkeys, care-circle memberships and owned circles, the
+  caller's queued profile refresh), and closes and scrubs the account row (address, name, birth, blood,
+  password; `tokens_valid_after` set), so no token survives and nothing in flight writes to it. Stored
+  objects are queued in the new `th_storage_purge` table in that same transaction and deleted after the
+  commit (an object another person's row still names is kept; one that cannot be deleted stays queued and
+  the next erasure retries it); the agent's conversation copies are deleted too. `external_identity` stays,
+  so the next sibian sign-in of the same identity gets a new, empty account. Backups keep copies until
+  `RETENTION_DAYS`. The profile refresh worker now skips closed accounts. How to tell:
+  `mirobody/tests/test_erase.py` (no database) and `test_erase_db.py` (needs
+  `MIROBODY_TEST_POSTGRES_DSN`).
+
+- **Where a reading came from, one timeline, a catalogue search, and recording by code.**
+  Reading rows of `GET /api/v1/health-indicators` now carry `source_kind`, `vendor` and
+  `source_ref`; catalogue rows carry `last_time`, `last_source` and `source_count`, and
+  `indicator_zh` with `zh_machine` (a Simplified-Chinese name, flagged when machine translated:
+  `res/catalog/labels/zh-auto.tsv`, 586 names, beside the hand-written `zh.tsv`).
+  `GET /api/v1/health-indicators/timeline?start_time&end_time&limit&cursor` is one newest-first
+  list of readings coded to a standard code: a device's readings collapse to one `day` entry per
+  metric, day, unit and source (n, avg, min, max, newest value), everything else is a `reading`;
+  paging by an opaque cursor neither skips nor repeats, whatever the database session zone.
+  `GET /api/v1/health-indicators/catalog?q=` searches the confidently coded catalogue by Chinese
+  or English name, LOINC code or category. `POST /api/data` takes an optional `code`: the reading
+  is filed under that catalogue code (unknown code `unknown-code`, a unit that cannot become the
+  catalogue unit `unit-mismatch`), the `indicator` text becomes optional, value and unit are kept as
+  typed, and a known range still guards it; a unit of another dimension is filed under the sibling
+  code of the same analyte (cholesterol: 2093-3 in mg/dL, 14647-2 in mmol/L). How to tell:
+  `mirobody/tests/test_health_source_db.py`, `test_record_with_code_db.py`,
+  `test_catalog_search.py`, `test_zh_labels.py`.
 
 - **Device push.** `POST /api/v1/ingest/batch` lets one trusted hub write
   device readings (sleep, heart rate, glucose, ...) for any sibian identity.

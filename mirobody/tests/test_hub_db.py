@@ -20,6 +20,7 @@ import httpx
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi import FastAPI
+from datetime import UTC
 
 DSN = os.environ.get("MIROBODY_TEST_POSTGRES_DSN", "")
 pytestmark = [pytest.mark.needs_db, pytest.mark.skipif(not DSN, reason="MIROBODY_TEST_POSTGRES_DSN is not set")]
@@ -242,3 +243,36 @@ async def test_out_of_range_and_unknown_are_reported_per_sample_and_not_stored(w
     d = r.json()["data"]
     assert (r.status_code, d["status"], d["inserted"], d["rejected"]) == (200, "partial", 1, {"out-of-range": 1, "unknown-metric": 1})
     assert await count(w, "th_observation") == 1
+
+
+async def test_catalog_names_reach_the_health_indicators_read_path_that_hygieia_uses(world, capsys):
+    """Names in res/catalog/metrics.tsv are coded to a LOINC and show on the board; other names are stored but not found."""
+    from datetime import datetime, timedelta
+
+    from mirobody.collect import PostgresHealthQuery
+    from mirobody.kernel import query
+
+    w = world
+    w.app.state.hub["registry"] = __import__("mirobody.collect.hub_registry", fromlist=["Registry"]).Registry.open()
+    uid = await make_account(w)
+    t = (datetime.now(UTC) - timedelta(hours=30)).replace(microsecond=0).isoformat()
+    r = await post(w, [
+        sample("a", "dailyTotalSleepTime", 320, "min", t), sample("b", "restingHeartRates", 58, "/min", t),
+        sample("c", "bodyMasss", 70, "kg", t), sample("d", "dailySteps", 8000, "count", t),
+        sample("e", "hrvSDNN", 45, "ms", t), sample("f", "sleep_duration", 320, "min", t),
+    ])
+    assert r.json()["data"]["inserted"] == 6, r.text
+    now = datetime.now(UTC)
+    win = query.Window(start_ms=int((now - timedelta(days=7)).timestamp() * 1000), end_ms=int((now + timedelta(days=1)).timestamp() * 1000), tz="UTC")
+    board = ("sleep duration", "steps", "resting heart rate", "heart rate variability", "body weight")   # what the board asks for
+    rows = await PostgresHealthQuery(reported=False).latest(str(uid), query.Selection(keywords=board), win)
+    got = {row["code"]: row for row in rows}
+    with capsys.disabled():
+        print("\nBOARD ROWS:", got)
+    assert {"93832-4", "40443-4", "29463-7", "41950-7", "112429-6"} <= set(got), got
+    # A name outside the catalog is stored and even matched by keyword, but with no LOINC code the board's
+    # card filter (which matches on code) never picks it up.
+    assert got["sleep_duration"]["system"] == "mirobody-device"
+    assert {"sleep_duration"}.isdisjoint({"93832-4", "41950-7", "40443-4", "112429-6", "29463-7"})
+    assert (got["93832-4"]["value"], got["93832-4"]["unit"]) == ("320", "min")      # what the board reads, as sent
+    assert await count(w, "th_observation", "name_text = 'sleep_duration'") == 1

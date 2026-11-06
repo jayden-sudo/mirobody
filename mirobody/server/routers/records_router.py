@@ -37,11 +37,12 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from mirobody.engine import resolve_reading as resolve_indicator_name
+from mirobody.units.convert import convertible
 from mirobody.units.normalize import normalize_unit, parse_value_unit
-from mirobody.kernel import series
+from mirobody.kernel import metrics, series
 from mirobody.collect import PostgresHealthQuery, observations
 from mirobody.standardize import devices
 from mirobody.kernel.ops import is_driver_exception
@@ -206,7 +207,8 @@ async def standardize(body: StandardizeRequest, user_id: str = Depends(verify_to
 # ── records ──────────────────────────────────────────────────────────────────
 
 class Record(BaseModel):
-    indicator: str = Field(min_length=1, max_length=200)
+    # Required unless a standard `code` is chosen: then the catalogue names the reading.
+    indicator: str | None = Field(None, min_length=1, max_length=200)
     value: Any = Field(description="Reading value; stored as written")
     unit: str | None = Field(None, max_length=64)
     # `measured_at` / `start_time` are accepted as aliases so a row handed back
@@ -217,6 +219,13 @@ class Record(BaseModel):
     start_time: str | None = None
     end_time: str | None = Field(None, description="Closes an episode that starts at `time`")
     source: str | None = Field(None, max_length=128, description="Where the reading came from")
+    code: str | None = Field(None, max_length=32, description="A standard (LOINC) code from the catalogue; the reading is filed under exactly it")
+
+    @model_validator(mode="after")
+    def _named(self) -> Record:
+        if not self.indicator and not (self.code or "").strip():
+            raise ValueError("a record needs an `indicator`, or a catalogue `code`")
+        return self
 
     def when(self) -> str | None:
         return self.time or self.measured_at or self.start_time
@@ -312,27 +321,60 @@ async def _insert_records(user_id: str, records: list[dict[str, Any]], *, source
     """
     drafts: list[observations.Draft] = []
     provenances: list[observations.Provenance] = []
+    refused: dict[str, int] = {}
     for ix, record in enumerate(records):
+        chosen = (record.get("code") or "").strip()
+        metric = metrics.by_loinc(chosen) if chosen else None
+        if chosen:
+            # A chosen code must be one the catalogue knows, and the unit must be the catalogue's or convert to it.
+            reason = "unknown-code" if metric is None else _unit_problem(metric, record.get("unit"))
+            if reason:
+                refused[reason] = refused.get(reason, 0) + 1
+                continue
         when = _parse_time(record.get("time"))
         end = _parse_time(record["end_time"]) if record.get("end_time") else when
         value = record.get("value")
-        vendor = _device_vendor(record.get("source"))
-        name, vendor_field = str(record["indicator"]), None
-        if vendor is not None:
+        # A chosen code is the person's own entry from the app: it is a manual record whatever `source` says, so it
+        # is held to the known ranges and never takes the device path.
+        vendor = None if metric is not None else _device_vendor(record.get("source"))
+        name, vendor_field = str(record.get("indicator") or ""), None
+        if metric is not None:
+            name = metric.display                      # the catalogue's name for the code, not the caller's text
+        elif vendor is not None:
             name, vendor_field = _device_metric(vendor, name)
         drafts.append(observations.Draft(
             name_text=name,
             observed_start=when,
             observed_end=end,
             value_text="" if value is None else str(value),
-            unit_text=str(record.get("unit") or ""),
+            unit_text=str(record.get("unit") or (metric.standard_unit if metric else "")),
             note_text=str(record.get("source") or ""),
             vendor_field=vendor_field,
             row_ix=ix,
+            code=chosen if metric is not None else "",
         ))
         provenances.append(_provenance(vendor, source))
+    if not drafts:
+        report = observations.Report()
+        report.rejected.update(refused)
+        return report
     tz = await observations.user_tz(str(user_id))
-    return await observations.ingest(str(user_id), drafts, provenances, user_tz=tz)
+    report = await observations.ingest(str(user_id), drafts, provenances, user_tz=tz)
+    for reason, n in refused.items():
+        report.rejected[reason] = report.rejected.get(reason, 0) + n
+    return report
+
+
+def _unit_problem(metric: Any, unit: str | None) -> str | None:
+    """`unit-mismatch` when the unit given cannot become the catalogue unit of the chosen metric."""
+    if not unit or not str(unit).strip():
+        return None                                    # none given: the catalogue's own unit is used
+    ucum = normalize_unit(str(unit))
+    if ucum is None:
+        return "unit-mismatch"
+    if ucum == metric.unit_ucum or convertible(ucum, metric.unit_ucum, loinc_code=metric.loinc):
+        return None
+    return "unit-mismatch"
 
 
 @router.post("/data")
@@ -346,6 +388,7 @@ async def write_records(body: WriteRequest, user_id: str = Depends(verify_token)
             "time": r.when(),
             "end_time": r.end_time,
             "source": r.source,
+            "code": r.code,
         }
         for r in body.records
     ]

@@ -1,0 +1,587 @@
+kind	key	label	description
+metric	ALANINE_AMINOTRANSFERASE	丙氨酸氨基转移酶（ALT）	
+metric	ASPARTATE_AMINOTRANSFERASE	天冬氨酸氨基转移酶（AST）	
+metric	ALKALINE_PHOSPHATASE	碱性磷酸酶	
+metric	GAMMA_GLUTAMYL_TRANSFERASE	γ-谷氨酰转移酶	
+metric	LACTATE_DEHYDROGENASE	乳酸脱氢酶	
+metric	UREA_NITROGEN	尿素氮	
+metric	CREATININE	肌酐	
+metric	URATE	尿酸	
+metric	BILIRUBIN	胆红素	
+metric	ALBUMIN	白蛋白	
+metric	PROTEIN	总蛋白	
+metric	SODIUM	钠	
+metric	POTASSIUM	钾	
+metric	CHLORIDE	氯	
+metric	BICARBONATE	碳酸氢盐	
+metric	CALCIUM	钙	
+metric	PHOSPHATE	磷酸盐	
+metric	GLOBULIN	球蛋白	
+metric	LIPOPROTEIN_LITTLE_A_SER_PLAS	脂蛋白(a)（血清/血浆）	
+metric	TROPONIN_I_CARDIAC_SER_PLAS	心肌肌钙蛋白 I（血清/血浆）	
+metric	PROSTATE_SPECIFIC_AG_FREE_SER_PLAS	游离前列腺特异性抗原（血清/血浆）	
+metric	CORTISOL_FREE_URINE	游离皮质醇（尿）	
+metric	IMMUNOGLOBULIN_LIGHT_CHAINS_KAPPA_SER_PLAS	免疫球蛋白轻链 κ（血清/血浆）	
+metric	IMMUNOGLOBULIN_LIGHT_CHAINS_LAMBDA_SER_PLAS	免疫球蛋白轻链 λ（血清/血浆）	
+metric	UREA_NITROGEN_POST_DIALYSIS_SER_PLAS	透析后尿素氮（血清/血浆）	
+metric	UREA_NITROGEN_PRE_DIALYSIS_SER_PLAS	透析前尿素氮（血清/血浆）	
+metric	CREATININE_BODY_FLD	肌酐（体液）	
+metric	ANGIOTENSIN_CONVERTING_ENZYME_CSF	血管紧张素转换酶（脑脊液）	
+metric	HOMOCYSTEINE_SER_PLAS	同型半胱氨酸（血清/血浆）	
+metric	SEX_HORMONE_BINDING_GLOBULIN_SER_PLAS	性激素结合球蛋白（血清/血浆）	
+metric	CREATINE_KINASE_MB_SER_PLAS	肌酸激酶同工酶 MB（血清/血浆）	
+metric	LACTATE_SER_PLAS	乳酸（血清/血浆）	
+metric	PYRUVATE_BLD	丙酮酸（全血）	
+metric	ASCORBATE_SER_PLAS	抗坏血酸（血清/血浆）	
+metric	BILE_ACID_SER_PLAS	胆汁酸（血清/血浆）	
+metric	LACTATE_DEHYDROGENASE_BODY_FLD	乳酸脱氢酶（体液）	
+metric	LACTATE_DEHYDROGENASE_SER_PLAS	乳酸脱氢酶（血清/血浆）	
+metric	PHENYLALANINE_SER_PLAS	苯丙氨酸（血清/血浆）	
+metric	ENOLASE_NEURON_SPECIFIC_SER_PLAS	神经元特异性烯醇化酶（血清/血浆）	
+metric	FRUCTOSAMINE_SER_PLAS	果糖胺（血清/血浆）	
+metric	AMMONIA_PLAS	氨（血浆）	
+metric	CALCITRIOL_SER_PLAS	骨化三醇（血清/血浆）	
+metric	17_HYDROXYPROGESTERONE_SER_PLAS	17-羟孕酮（血清/血浆）	
+metric	COBALAMINS_BLD	钴胺素（维生素 B12）（全血）	
+metric	5_NUCLEOTIDASE_SER_PLAS	5'-核苷酸酶（血清/血浆）	
+metric	ADENOSINE_TRIPHOSPHATE_BLD	三磷酸腺苷（全血）	
+metric	ALBUMIN_CSF	白蛋白（脑脊液）	
+metric	ALBUMIN_BODY_FLD	白蛋白（体液）	
+metric	PROSTAGLANDIN_F2_ALPHA_URINE	前列腺素 F2α（尿）	
+metric	ALDOSTERONE_SER_PLAS	醛固酮（血清/血浆）	
+metric	ALKALINE_PHOSPHATASE_BONE_SER_PLAS	骨型碱性磷酸酶（血清/血浆）	
+metric	IMMUNOGLOBULIN_LIGHT_CHAINS_URINE	本周蛋白（24小时尿）	
+metric	HEMOGLOBIN_A1C_HEMOGLOBIN_TOTAL_BLD	糖化血红蛋白 HbA1c（全血）	
+metric	CALCIUM_URINE	钙（尿）	
+metric	CALCIUM_IONIZED_SER_PLAS	离子钙（血清/血浆）	
+metric	AMYLASE_BODY_FLD	淀粉酶（体液）	
+metric	AMYLASE_SER_PLAS	淀粉酶（血清/血浆）	
+metric	NIACIN_SER_PLAS	烟酸（血清/血浆）	
+metric	ALPHA_1_ANTITRYPSIN_SER_PLAS	α1-抗胰蛋白酶（血清/血浆）	
+metric	CHOLESTEROL_IN_LDL_SER_PLAS	低密度脂蛋白胆固醇（直接法）	
+metric	ALPHA_1_FETOPROTEIN_SER_PLAS	甲胎蛋白（血清/血浆）	
+metric	ANDROSTANOLONE_SER_PLAS	双氢睾酮（血清/血浆）	
+metric	ANDROSTENEDIONE_SER_PLAS	雄烯二酮（血清/血浆）	
+metric	ANGIOTENSIN_CONVERTING_ENZYME_BLD	血管紧张素转换酶（全血）	
+metric	APOLIPOPROTEIN_B_100_SER_PLAS	载脂蛋白 B-100（血清/血浆）	
+metric	APOLIPOPROTEIN_B_SER_PLAS	载脂蛋白 B（血清/血浆）	
+metric	IGE_SER_PLAS	免疫球蛋白 E（血清/血浆）	
+metric	MAGNESIUM_SER_PLAS	镁（血清/血浆）	
+metric	MAGNESIUM_URINE	镁（尿）	
+metric	ALPHA_1_FETOPROTEIN_AMNIO_FLD	甲胎蛋白（羊水）	
+metric	BILIRUBIN_GLUCURONIDATED_BILIRUBIN_ALBUMIN_BOUND_SER_PLAS	直接胆红素（血清/血浆）	
+metric	BILIRUBIN_BODY_FLD	总胆红素（体液）	
+metric	BILIRUBIN_URINE	总胆红素（尿）	
+metric	C_PEPTIDE_SER_PLAS	C 肽（血清/血浆）	
+metric	C_REACTIVE_PROTEIN_SER_PLAS	C 反应蛋白（血清/血浆）	
+metric	CALCIDIOL_SER_PLAS	骨化二醇（25-羟维生素 D3）（血清/血浆）	
+metric	CHOLECALCIFEROL_SER_PLAS	胆钙化醇（维生素 D3）（血清/血浆）	
+metric	CALCIUM_IONIZED_BLD	离子钙（全血）	
+metric	CARBON_DIOXIDE_SER_PLAS	二氧化碳（血清/血浆）	
+metric	CARCINOEMBRYONIC_AG_SER_PLAS	癌胚抗原（血清/血浆）	
+metric	ACID_PHOSPHATASE_PROSTATIC_SER	前列腺酸性磷酸酶（血清）	
+metric	THIAMINE_SER_PLAS	硫胺素（维生素 B1）（血清/血浆）	
+metric	CAROTENE_SER_PLAS	胡萝卜素（血清/血浆）	
+metric	CARBOXYHEMOGLOBIN_HEMOGLOBIN_TOTAL_BLD	碳氧血红蛋白占总血红蛋白比例（全血）	
+metric	PROLACTIN_SER_PLAS	催乳素（血清/血浆）	
+metric	CREATININE_URINE	肌酐（24小时尿）	
+metric	CITRULLINE_SER_PLAS	瓜氨酸（血清/血浆）	
+metric	CERULOPLASMIN_SER_PLAS	铜蓝蛋白（血清/血浆）	
+metric	TYROSINE_SER_PLAS	酪氨酸（血清/血浆）	
+metric	CHLORIDE_BLD	氯（全血）	
+metric	CHLORIDE_SWEAT	氯（汗液）	
+metric	CHLORIDE_URINE	氯（尿）	
+metric	CHOLESTEROL_IN_HDL_SER_PLAS	高密度脂蛋白胆固醇（血清/血浆）	
+metric	CHOLESTEROL_SER_PLAS	总胆固醇（血清/血浆）	
+metric	CHORIOGONADOTROPIN_BETA_SUBUNIT_SER_PLAS	β-人绒毛膜促性腺激素（血清/血浆）	
+metric	CHORIOGONADOTROPIN_BETA_SUBUNIT_URINE	β-人绒毛膜促性腺激素（尿）	
+metric	CHORIOGONADOTROPIN_BETA_SUBUNIT_FREE_SER_PLAS	游离 β-人绒毛膜促性腺激素（血清/血浆）	
+metric	COLLAGEN_CROSSLINKED_N_TELOPEPTIDE_SER	I 型胶原交联 N-端肽（血清）	
+metric	COBALAMINS_SER_PLAS	钴胺素（维生素 B12）（血清/血浆）	
+metric	LEPTIN_SER_PLAS	瘦素（血清/血浆）	
+metric	CORTICOTROPIN_PLAS	促肾上腺皮质激素（血浆）	
+metric	CORTISOL_SALIVA	皮质醇（唾液）	
+metric	CORTISOL_SER_PLAS	皮质醇（血清/血浆）	
+metric	CORTISOL_FREE_SER_PLAS	游离皮质醇（血清/血浆）	
+metric	PROTEIN_URINE	总蛋白（24小时尿）	
+metric	SODIUM_URINE	钠（24小时尿）	
+metric	THIOPURINE_METHYLTRANSFERASE_RBC	硫嘌呤甲基转移酶（红细胞）	
+metric	CREATINE_KINASE_SER_PLAS	肌酸激酶（血清/血浆）	
+metric	TRYPTASE_SER_PLAS	类胰蛋白酶（血清/血浆）	
+metric	CREATININE_AMNIO_FLD	肌酐（羊水）	
+metric	DEHYDROEPIANDROSTERONE_SULFATE_SER_PLAS	硫酸脱氢表雄酮（血清/血浆）	
+metric	DEHYDROEPIANDROSTERONE_UNCONJUGATED_SER_PLAS	脱氢表雄酮（非结合型）（血清/血浆）	
+metric	DOPAMINE_SER_PLAS	多巴胺（血清/血浆）	
+metric	DOPAMINE_URINE	多巴胺（尿）	
+metric	CALCIFEROL_SER_PLAS	麦角钙化醇（维生素 D2）（血清/血浆）	
+metric	ESTRADIOL_SER_PLAS	雌二醇（E2）（血清/血浆）	
+metric	ESTRIOL_UNCONJUGATED_SER_PLAS	游离雌三醇（非结合型）（血清/血浆）	
+metric	ESTRIOL_SER_PLAS	雌三醇（E3）（血清/血浆）	
+metric	ESTROGEN_SER_PLAS	雌激素（血清/血浆）	
+metric	ESTRONE_SER_PLAS	雌酮（E1）（血清/血浆）	
+metric	FERRITIN_SER_PLAS	铁蛋白（血清/血浆）	
+metric	FOLATE_BLD	叶酸（全血）	
+metric	FOLATE_RBC	叶酸（红细胞）	
+metric	FOLATE_SER_PLAS	叶酸（血清/血浆）	
+metric	GASTRIN_SER_PLAS	胃泌素（血清/血浆）	
+metric	GLUCOSE_CSF	葡萄糖（脑脊液）	
+metric	GLUCOSE_BODY_FLD	葡萄糖（体液）	
+metric	GLUCOSE_SER_PLAS	葡萄糖（血清/血浆）	
+metric	GLUCOSE_URINE	葡萄糖（尿）	
+metric	GLUCOSE_6_PHOSPHATE_DEHYDROGENASE_RBC	葡萄糖-6-磷酸脱氢酶（红细胞）	
+metric	IGA_SER_PLAS	免疫球蛋白 A（血清/血浆）	
+metric	IGD_SER	免疫球蛋白 D（血清）	
+metric	IGE_SER	免疫球蛋白 E（血清）	
+metric	IGG_CSF	免疫球蛋白 G（脑脊液）	
+metric	IGG_SER_PLAS	免疫球蛋白 G（血清/血浆）	
+metric	IGM_SER_PLAS	免疫球蛋白 M（血清/血浆）	
+metric	INSULIN_LIKE_GROWTH_FACTOR_BINDING_PROTEIN_3_SER_PLAS	胰岛素样生长因子结合蛋白 3（血清/血浆）	
+metric	INSULIN_LIKE_GROWTH_FACTOR_I_SER_PLAS	胰岛素样生长因子 I（血清/血浆）	
+metric	IODINE_SER_PLAS	碘（血清/血浆）	
+metric	IRON_SER_PLAS	铁（血清/血浆）	
+metric	IRON_BINDING_CAPACITY_SER_PLAS	总铁结合力（血清/血浆）	
+metric	IRON_BINDING_CAPACITY_UNSATURATED_SER_PLAS	不饱和铁结合力（血清/血浆）	
+metric	CHORIOGONADOTROPIN_URINE	人绒毛膜促性腺激素（尿）	
+metric	CHROMOGRANIN_A_SER_PLAS	嗜铬粒蛋白 A（血清/血浆）	
+metric	TRIGLYCERIDE_SER_PLAS	甘油三酯（血清/血浆）	
+metric	MAGNESIUM_RBC	镁（红细胞）	
+metric	TESTOSTERONE_FREE_SER_PLAS	游离睾酮（血清/血浆）	
+metric	METHEMOGLOBIN_HEMOGLOBIN_TOTAL_BLD	高铁血红蛋白占总血红蛋白比例（全血）	
+metric	MYELIN_BASIC_PROTEIN_CSF	髓鞘碱性蛋白（脑脊液）	
+metric	MYOGLOBIN_SER_PLAS	肌红蛋白（血清/血浆）	
+metric	MYOGLOBIN_URINE	肌红蛋白（尿）	
+metric	OSTEOCALCIN_SER_PLAS	骨钙素（血清/血浆）	
+metric	OXALATE_URINE	草酸盐（尿）	
+metric	SEROTONIN_SER	血清素（血清）	
+metric	PARATHYRIN_INTACT_SER_PLAS	完整甲状旁腺激素（血清/血浆）	
+metric	ANGIOTENSIN_CONVERTING_ENZYME_SER_PLAS	血管紧张素转换酶（血清/血浆）	
+metric	PHOSPHATE_URINE	磷酸盐（尿）	
+metric	PROINSULIN_SER_PLAS	胰岛素原（血清/血浆）	
+metric	UBIQUINONE_10_SER_PLAS	辅酶 Q10（血清/血浆）	
+metric	POTASSIUM_URINE	钾（尿）	
+metric	PREGNENOLONE_SER_PLAS	孕烯醇酮（血清/血浆）	
+metric	PROGESTERONE_SER_PLAS	孕酮（血清/血浆）	
+metric	PROSTATE_SPECIFIC_AG_SER_PLAS	前列腺特异性抗原（血清/血浆）	
+metric	PROTEIN_CSF	总蛋白（脑脊液）	
+metric	PROTEIN_BODY_FLD	总蛋白（体液）	
+metric	PROTOPORPHYRIN_ZINC_RBC	锌原卟啉（红细胞）	
+metric	PYRIDOXINE_SER_PLAS	吡哆醇（维生素 B6）（血清/血浆）	
+metric	RETINOL_SER_PLAS	视黄醇（维生素 A）（血清/血浆）	
+metric	SEROTONIN_BLD	血清素（全血）	
+metric	SODIUM_BLD	钠（全血）	
+metric	BETA_HYDROXYBUTYRATE_SER_PLAS	β-羟丁酸（血清/血浆）	
+metric	PHENYLALANINE_BLD_DOT	苯丙氨酸（干血斑）	
+metric	SOMATOTROPIN_SER_PLAS	生长激素（血清/血浆）	
+metric	TESTOSTERONE_SER_PLAS	睾酮（血清/血浆）	
+metric	THIAMINE_BLD	硫胺素（维生素 B1）（全血）	
+metric	THYROGLOBULIN_SER_PLAS	甲状腺球蛋白（血清/血浆）	
+metric	THYROXINE_BINDING_GLOBULIN_SER_PLAS	甲状腺素结合球蛋白（血清/血浆）	
+metric	THYROXINE_FREE_SER_PLAS	游离甲状腺素（FT4）（血清/血浆）	
+metric	TRANSFERRIN_RECEPTOR_SOLUBLE_SER_PLAS	可溶性转铁蛋白受体（血清/血浆）	
+metric	THYROXINE_SER_PLAS	甲状腺素（T4）（血清/血浆）	
+metric	TRANSFERRIN_SER_PLAS	转铁蛋白（血清/血浆）	
+metric	TRIACYLGLYCEROL_LIPASE_SER_PLAS	脂肪酶（血清/血浆）	
+metric	TRIGLYCERIDE_BLD	甘油三酯（全血）	
+metric	TRIIODOTHYRONINE_FREE_SER_PLAS	游离三碘甲状腺原氨酸（FT3）（血清/血浆）	
+metric	TRIIODOTHYRONINE_REVERSE_SER_PLAS	反三碘甲状腺原氨酸（rT3）（血清/血浆）	
+metric	TRIIODOTHYRONINE_SER_PLAS	三碘甲状腺原氨酸（T3）（血清/血浆）	
+metric	TRIIODOTHYRONINE_TRUE_SER_PLAS	真三碘甲状腺原氨酸（血清/血浆）	
+metric	URATE_URINE	尿酸（尿）	
+metric	UREA_URINE	尿素（尿）	
+metric	UREA_NITROGEN_BODY_FLD	尿素氮（体液）	
+metric	NATRIURETIC_PEPTIDE_B_SER_PLAS	B 型利钠肽（BNP）（血清/血浆）	
+metric	UREA_NITROGEN_URINE	尿素氮（尿）	
+metric	UROBILINOGEN_URINE	尿胆原（尿）	
+metric	THYROXINE_BLD_DOT	甲状腺素（T4）（干血斑）	
+metric	GLUCOSE_BLDC	葡萄糖（毛细血管血）	
+metric	LACTATE_BLD	乳酸（全血）	
+metric	KETONES_SER_PLAS	酮体（血清/血浆）	
+metric	NATRIURETIC_PEPTIDE_B_PROHORMONE_N_TERMINAL_SER_PLAS	N 末端 B 型利钠肽原（NT-proBNP）（血清/血浆）	
+metric	CYSTATIN_C_SER_PLAS	胱抑素 C（血清/血浆）	
+metric	IMMUNOGLOBULIN_LIGHT_CHAINS_LAMBDA_FREE_SER_PLAS	游离 λ 轻链（血清/血浆）	
+metric	INHIBIN_B_SER_PLAS	抑制素 B（血清/血浆）	
+metric	VITAMIN_D_METABOLITES_SER_PLAS	维生素 D 及其代谢物（血清/血浆）	
+metric	TYROSINE_BLD_DOT	酪氨酸（干血斑）	
+metric	IMMUNOGLOBULIN_LIGHT_CHAINS_KAPPA_FREE_SER	游离 κ 轻链（血清）	
+metric	MULLERIAN_INHIBITING_SUBSTANCE_SER_PLAS	抗米勒管激素（血清/血浆）	
+metric	CREATININE_BLD	肌酐（全血）	
+metric	RETINYL_PALMITATE_SER_PLAS	棕榈酸视黄酯（血清/血浆）	
+metric	THYROGLOBULIN_RECOVERY_SER_PLAS	甲状腺球蛋白回收率（血清/血浆）	
+metric	COLLAGEN_CROSSLINKED_C_TELOPEPTIDE_SER_PLAS	I 型胶原交联 C-端肽（血清/血浆）	
+metric	NATRIURETIC_PEPTIDE_B_BLD	B 型利钠肽（BNP）（全血）	
+metric	TROPONIN_I_CARDIAC_BLD	心肌肌钙蛋白 I（全血）	
+metric	ERCALCIDIOL_SER_PLAS	麦角骨化二醇（25-羟维生素 D2）（血清/血浆）	
+metric	CREATINE_KINASE_MB_BLD	肌酸激酶同工酶 MB（全血）	
+metric	CALCIUM_BLD	钙（全血）	
+metric	MYOGLOBIN_BLD	肌红蛋白（全血）	
+metric	1_5_ANHYDROGLUCITOL_SER_PLAS	1,5-脱水葡萄糖醇（血清/血浆）	
+metric	ALPHA_1_FETOPROTEIN_TUMOR_MARKER_SER_PLAS	甲胎蛋白（肿瘤标志物）（血清/血浆）	
+metric	HUMAN_EPIDIDYMIS_PROTEIN_4_SER_PLAS	人附睾蛋白 4（HE4）（血清/血浆）	
+metric	CALCIDIOL_ERCALCIDIOL_SER_PLAS	骨化二醇与麦角骨化二醇合计（血清/血浆）	
+metric	GALECTIN_3_SER_PLAS	半乳糖凝集素-3（血清/血浆）	
+metric	POTASSIUM_BLD	钾（全血）	
+metric	UREA_NITROGEN_BLD	尿素氮（全血）	
+metric	RIBOFLAVIN_BLD	核黄素（维生素 B2）（全血）	
+metric	17_HYDROXYPREGNENOLONE_SER_PLAS	17-羟孕烯醇酮（血清/血浆）	
+metric	VANILLYLMANDELATE_URINE	香草扁桃酸（尿）	
+metric	CORTISOL_PM_TROUGH_SPECIMEN_SER_PLAS	皮质醇（下午谷值标本）（血清/血浆）	
+metric	CORTISOL_AM_PEAK_SPECIMEN_SER_PLAS	皮质醇（上午峰值标本）（血清/血浆）	
+metric	RUNNING_DISTANCE	跑步距离	
+metric	SWIMMING_DISTANCE	游泳距离	
+metric	WALKING_DISTANCE	步行距离	
+metric	EXERCISE_DISTANCE	运动距离	
+metric	WAKE_AFTER_SLEEP_ONSET	入睡后清醒时间	
+metric	ALTITUDE	海拔	
+metric	BLOOD_GLUCOSE_MOLES	血糖（mmol/L）	
+metric	DNA_SINGLE_STRAND_AB_IGG_SER	抗单链 DNA 抗体 IgG（血清）	
+metric	COTININE_URINE	可替宁（尿）	
+metric	LUTROPIN_SER_PLAS	黄体生成素（血清/血浆）	
+metric	DIGOXIN_SER_PLAS	地高辛（血清/血浆）	
+metric	COMPLEMENT_C1_ESTERASE_INHIBITOR_FUNCTIONAL_COMPLEMENT_C1_ESTERASE_INHIBITOR_TOTAL_SER_PLAS	C1 酯酶抑制物功能占总量比例（血清/血浆）	
+metric	LEAD_SER_PLAS	铅（血清/血浆）	
+metric	PINUS_EDULIS_AB_IGE_SER	松子特异性 IgE 抗体（血清）	
+metric	HEPATITIS_C_VIRUS_RNA_SER_PLAS	丙型肝炎病毒 RNA（血清/血浆）	
+metric	ACETYLCHOLINE_RECEPTOR_BINDING_AB_SER	乙酰胆碱受体结合抗体（血清）	
+metric	BLEEDING_TIME_PATIENT	出血时间	
+metric	SMITH_EXTRACTABLE_NUCLEAR_AB_SER	抗 Sm 抗体（ENA）（血清）	
+metric	ERYTHROCYTE_BODY_FLUID_BODY_FLD	红细胞压积（体液）	
+metric	MACADAMIA_SPP_AB_IGE_SER	澳洲坚果特异性 IgE 抗体（血清）	
+metric	TACROLIMUS_BLD	他克莫司（全血）	
+metric	HAEMOPHILUS_INFLUENZAE_B_AB_IGG_SER	b 型流感嗜血杆菌抗体 IgG（血清）	
+metric	HEPATITIS_B_VIRUS_DNA_SER	乙型肝炎病毒 DNA（血清）	
+metric	JO_1_EXTRACTABLE_NUCLEAR_AB_SER	抗 Jo-1 抗体（ENA）（血清）	
+metric	RHEUMATOID_FACTOR_SER_PLAS	类风湿因子（血清/血浆）	
+metric	THYROTROPIN_SER_PLAS	促甲状腺激素（TSH）（血清/血浆）	
+metric	ELAEAGNUS_ANGUSTIFOLIA_AB_IGE_SER	沙枣特异性 IgE 抗体（血清）	
+metric	ULMUS_AMERICANA_AB_IGG_SER	美洲榆特异性 IgG 抗体（血清）	
+metric	CORYNEBACTERIUM_DIPHTHERIAE_AB_IGG_SER	白喉棒状杆菌抗体 IgG（血清）	
+metric	LEUKOCYTES_STOOL	白细胞（粪便，手工计数）	
+metric	GLUTAMATE_DECARBOXYLASE_65_AB_SER	谷氨酸脱羧酶 65 抗体（GAD65）（血清）	
+metric	THROMBIN_ANTITHROMBIN_COMPLEX_AG_PPP	凝血酶-抗凝血酶复合物（乏血小板血浆）	
+metric	LITHIUM_SER_PLAS	锂（血清/血浆）	
+metric	METHOTREXATE_SER_PLAS	甲氨蝶呤（血清/血浆）	
+metric	COAGULATION_PPP	活化部分凝血活酶时间（APTT）（乏血小板血浆）	
+metric	FOLLITROPIN_SER_PLAS	卵泡刺激素（血清/血浆）	
+metric	PHOSPHATASE_LEUKOCYTE_WBC	白细胞碱性磷酸酶（白细胞）	
+metric	RHEUMATOID_FACTOR_SER	类风湿因子（血清，比浊法）	
+metric	BETULA_VERRUCOSA_AB_IGE_SER	欧洲白桦特异性 IgE 抗体（血清）	
+metric	ALNUS_INCANA_AB_IGE_SER	灰桤木特异性 IgE 抗体（血清）	
+metric	BETA_2_GLYCOPROTEIN_1_AB_IGG_SER	β2-糖蛋白 I 抗体 IgG（血清）	
+metric	BETA_2_GLYCOPROTEIN_1_AB_IGM_SER	β2-糖蛋白 I 抗体 IgM（血清）	
+metric	OXAZEPAM_URINE	奥沙西泮（尿，确认检测）	
+metric	HEPATITIS_B_VIRUS_SURFACE_AB_SER	乙型肝炎表面抗体（抗-HBs）（血清）	
+metric	TOPIRAMATE_SER_PLAS	托吡酯（血清/血浆）	
+metric	SJOGRENS_SYNDROME_B_EXTRACTABLE_NUCLEAR_AB_SER	抗 SS-B 抗体（ENA）（血清）	
+metric	SJOGRENS_SYNDROME_A_EXTRACTABLE_NUCLEAR_AB_SER	抗 SS-A 抗体（ENA）（血清）	
+metric	CHORIOGONADOTROPIN_SER_PLAS	人绒毛膜促性腺激素（血清/血浆）	
+metric	HISTOPLASMA_CAPSULATUM_AG_SER	荚膜组织胞浆菌抗原（血清）	
+metric	CHICKEN_DROPPINGS_AB_IGE_SER	鸡粪特异性 IgE 抗体（血清）	
+metric	CALCITONIN_SER_PLAS	降钙素（血清/血浆）	
+metric	ACETYLCHOLINE_RECEPTOR_AB_SER	乙酰胆碱受体抗体（血清）	
+metric	HIV_1_RNA_SER_PLAS	HIV-1 RNA（血清/血浆）	
+metric	INSULIN_SER_PLAS	胰岛素（血清/血浆）	
+metric	GLIADIN_AB_IGA_SER	麦胶蛋白抗体 IgA（血清）	
+metric	GLIADIN_AB_IGG_SER	麦胶蛋白抗体 IgG（血清）	
+metric	ERYTHROCYTE_BLOOD_BLD	红细胞压积（全血）	
+metric	VANCOMYCIN_SER_PLAS	万古霉素（血清/血浆）	
+metric	BETA_2_GLYCOPROTEIN_1_AB_IGA_SER	β2-糖蛋白 I 抗体 IgA（血清）	
+metric	SMITH_EXTRACTABLE_NUCLEAR_AB_RIBONUCLEOPROTEIN_EXTRACTABLE_NUCLEAR_AB_IGG_SER	抗 Sm/RNP 抗体 IgG（ENA）（血清）	
+metric	HEPATITIS_A_VIRUS_AB_IGM_SER	甲型肝炎病毒抗体 IgM（血清）	
+metric	HEPATITIS_D_VIRUS_AB_SER	丁型肝炎病毒抗体（血清）	
+metric	HIV_1_RNA_PLAS	HIV-1 RNA（血浆）	
+metric	INHIBIN_A_SER_PLAS	抑制素 A（血清/血浆）	
+metric	MYCOPHENOLATE_SER_PLAS	霉酚酸（血清/血浆）	
+metric	EPSTEIN_BARR_VIRUS_EARLY_AB_IGG_SER	EB 病毒早期抗原抗体 IgG（血清）	
+metric	BLATELLA_GERMANICA_AB_IGG_SER	德国小蠊（蟑螂）特异性 IgG 抗体（血清）	
+metric	MUMPS_VIRUS_AB_IGM_SER	腮腺炎病毒抗体 IgM（血清）	
+metric	ZINC_RBC	锌（红细胞）	
+metric	SCHISTOSOMA_SP_AB_IGG_SER	血吸虫抗体 IgG（血清）	
+metric	EOSINOPHILS_BLD	嗜酸性粒细胞计数（全血）	
+metric	LEUKOCYTES_BLD	白细胞计数（全血）	
+metric	PLATELETS_BLD	血小板计数（全血）	
+metric	SMITH_EXTRACTABLE_NUCLEAR_AB_RIBONUCLEOPROTEIN_EXTRACTABLE_NUCLEAR_AB_SER	抗 Sm/RNP 抗体（ENA）（血清）	
+metric	NUCLEAR_AB_SER	抗核抗体（血清）	
+metric	PARATHYRIN_RELATED_PROTEIN_SER_PLAS	甲状旁腺激素相关蛋白（血清/血浆）	
+metric	SCL_70_EXTRACTABLE_NUCLEAR_AB_SER	抗 Scl-70 抗体（ENA）（血清）	
+metric	IMMUNE_COMPLEX_SER_PLAS	免疫复合物（C1q 结合法）（血清/血浆）	
+metric	COLLAGEN_CROSSLINKED_N_TELOPEPTIDE_URINE	I 型胶原交联 N-端肽（尿）	
+metric	RENIN_PLAS	肾素（血浆）	
+metric	SIROLIMUS_BLD	西罗莫司（全血）	
+metric	HEPATITIS_B_VIRUS_DNA_SER_PLAS	乙型肝炎病毒 DNA 定量（血清/血浆）	
+metric	ZONISAMIDE_SER_PLAS	唑尼沙胺（血清/血浆）	
+metric	LYSOZYME_BODY_FLD	溶菌酶（体液）	
+metric	HISTONE_AB_IGG_SER	抗组蛋白抗体 IgG（血清）	
+metric	LEGIONELLA_PNEUMOPHILA_AB_SER	嗜肺军团菌抗体（血清）	
+metric	EPSTEIN_BARR_VIRUS_NUCLEAR_AB_IGG_SER	EB 病毒核抗原抗体 IgG（血清）	
+metric	PERIPLANETA_AMERICANA_AB_IGE_SER	美洲大蠊（蟑螂）特异性 IgE 抗体（血清）	
+metric	CHORIOGONADOTROPIN_INTACT_SER_PLAS	完整人绒毛膜促性腺激素（血清/血浆）	
+metric	CYTOMEGALOVIRUS_DNA_SER_PLAS	巨细胞病毒 DNA 定量（血清/血浆）	
+metric	GLOMERULAR_BASEMENT_MEMBRANE_AB_IGG_SER	抗肾小球基底膜抗体 IgG（血清）	
+metric	LEVETIRACETAM_SER_PLAS	左乙拉西坦（血清/血浆）	
+metric	TISSUE_TRANSGLUTAMINASE_AB_IGA_SER	组织转谷氨酰胺酶抗体 IgA（血清）	
+metric	10_HYDROXYCARBAZEPINE_SER_PLAS	10-羟基卡马西平（血清/血浆）	
+metric	SACCHAROMYCES_CEREVISIAE_AB_IGA_SER	酿酒酵母抗体 IgA（血清）	
+metric	ISLET_CELL_512_AB_SER	胰岛细胞 512 抗体（血清）	
+metric	VASOACTIVE_INTESTINAL_PEPTIDE_SER_PLAS	血管活性肠肽（血清/血浆）	
+metric	VASOPRESSIN_SER_PLAS	血管加压素（血清/血浆）	
+metric	COAGULATION_BLD	活化部分凝血活酶时间（APTT）（全血）	
+metric	ANTITHROMBIN_PPP	抗凝血酶（乏血小板血浆）	
+metric	ANTITHROMBIN_AG_PPP	抗凝血酶抗原（乏血小板血浆）	
+metric	ACTIVATED_CLOTTING_TIME_BLD	活化凝血时间（全血）	
+metric	REDUCING_SUBSTANCES_URINE	还原性物质（尿）	
+metric	CYCLIC_CITRULLINATED_PEPTIDE_AB_SER	抗环瓜氨酸肽抗体（血清）	
+metric	LIVER_KIDNEY_MICROSOMAL_1_AB_SER	抗肝肾微粒体 1 抗体（血清）	
+metric	FIBRINOGEN_PPP	纤维蛋白原（乏血小板血浆）	
+metric	FIBRINOGEN_AG_PPP	纤维蛋白原抗原（乏血小板血浆）	
+metric	TACROLIMUS_SER_PLAS	他克莫司（血清/血浆）	
+metric	HEPARIN_UNFRACTIONATED_PPP	普通肝素活性（乏血小板血浆）	
+metric	ACETAMINOPHEN_SER_PLAS	对乙酰氨基酚（血清/血浆）	
+metric	CYCLOSPORINE_2H_POST_DOSE_BLD	环孢素（服药后 2 小时）（全血）	
+metric	AMIKACIN_TROUGH_SER_PLAS	阿米卡星（谷浓度）（血清/血浆）	
+metric	ANABASINE_URINE	假木贼碱（尿）	
+metric	CYCLIC_CITRULLINATED_PEPTIDE_AB_IGG_SER_PLAS	抗环瓜氨酸肽抗体 IgG（血清/血浆）	
+metric	CAFFEINE_SER_PLAS	咖啡因（血清/血浆）	
+metric	CARBAMAZEPINE_SER_PLAS	卡马西平（血清/血浆）	
+metric	CARBOXY_TETRAHYDROCANNABINOL_URINE	羧基四氢大麻酚（尿）	
+metric	STRONGYLOIDES_SP_AB_IGG_SER	粪类圆线虫抗体 IgG（血清）	
+metric	ACTIN_AB_IGG_SER_PLAS	抗肌动蛋白抗体 IgG（血清/血浆）	
+metric	CYCLOSPORINE_BLD	环孢素（全血）	
+metric	OXCARBAZEPINE_SER_PLAS	奥卡西平（血清/血浆）	
+metric	PROPOXYPHENE_URINE	右丙氧芬（尿）	
+metric	SACCHAROMYCES_CEREVISIAE_AB_IGG_SER	酿酒酵母抗体 IgG（血清）	
+metric	SALICYLATES_SER_PLAS	水杨酸盐（血清/血浆）	
+metric	GENTAMICIN_SER_PLAS	庆大霉素（血清/血浆）	
+metric	TOBRAMYCIN_SER_PLAS	妥布霉素（血清/血浆）	
+metric	ETHOSUXIMIDE_SER_PLAS	乙琥胺（血清/血浆）	
+metric	GENTAMICIN_PEAK_SER_PLAS	庆大霉素（峰浓度）（血清/血浆）	
+metric	GENTAMICIN_TROUGH_SER_PLAS	庆大霉素（谷浓度）（血清/血浆）	
+metric	LIDOCAINE_SER_PLAS	利多卡因（血清/血浆）	
+metric	N_ACETYLPROCAINAMIDE_SER_PLAS	N-乙酰普鲁卡因胺（血清/血浆）	
+metric	VORICONAZOLE_SER_PLAS	伏立康唑（血清/血浆）	
+metric	NICOTINE_URINE	尼古丁（尿）	
+metric	NORTRIPTYLINE_SER_PLAS	去甲替林（血清/血浆）	
+metric	LEFLUNOMIDE_SER_PLAS	来氟米特（血清/血浆）	
+metric	PHENOBARBITAL_SER_PLAS	苯巴比妥（血清/血浆）	
+metric	PHENYTOIN_SER_PLAS	苯妥英（血清/血浆）	
+metric	PHENYTOIN_FREE_SER_PLAS	游离苯妥英（血清/血浆）	
+metric	PROCAINAMIDE_SER_PLAS	普鲁卡因胺（血清/血浆）	
+metric	THEOPHYLLINE_SER_PLAS	茶碱（血清/血浆）	
+metric	TOBRAMYCIN_PEAK_SER_PLAS	妥布霉素（峰浓度）（血清/血浆）	
+metric	TOBRAMYCIN_TROUGH_SER_PLAS	妥布霉素（谷浓度）（血清/血浆）	
+metric	VALPROATE_SER_PLAS	丙戊酸（血清/血浆）	
+metric	VANCOMYCIN_PEAK_SER_PLAS	万古霉素（峰浓度）（血清/血浆）	
+metric	VANCOMYCIN_TROUGH_SER_PLAS	万古霉素（谷浓度）（血清/血浆）	
+metric	BK_VIRUS_DNA_SER_PLAS	BK 病毒 DNA（血清/血浆）	
+metric	BK_VIRUS_DNA_URINE	BK 病毒 DNA（尿）	
+metric	BETULA_POPULIFOLIA_AB_IGE_SER	白桦（灰桦）特异性 IgE 抗体（血清）	
+metric	1_3_BETA_GLUCAN_SER	1,3-β-D-葡聚糖（血清）	
+metric	CANNABINOIDS_URINE	大麻素类（尿）	
+metric	BETA_2_GLYCOPROTEIN_1_AB_IGA_SER_PLAS	β2-糖蛋白 I 抗体 IgA（血清/血浆）	
+metric	BETA_2_GLYCOPROTEIN_1_AB_IGG_SER_PLAS	β2-糖蛋白 I 抗体 IgG（血清/血浆）	
+metric	BETA_2_GLYCOPROTEIN_1_AB_IGM_SER_PLAS	β2-糖蛋白 I 抗体 IgM（血清/血浆）	
+metric	COMPLEMENT_C1_ESTERASE_INHIBITOR_SER_PLAS	补体 C1 酯酶抑制物（血清/血浆）	
+metric	COMPLEMENT_C3_SER_PLAS	补体 C3（血清/血浆）	
+metric	COMPLEMENT_C4_SER_PLAS	补体 C4（血清/血浆）	
+metric	CHORIOGONADOTROPIN_INTACT_BETA_SUBUNIT_SER_PLAS	完整 hCG 与 β 亚单位合计（血清/血浆）	
+metric	ETHYL_GLUCURONIDE_URINE	乙基葡糖苷酸（尿）	
+metric	COMPLEMENT_TOTAL_HEMOLYTIC_CH50_SER_PLAS	总补体溶血活性（CH50）（血清/血浆）	
+metric	HAPTOGLOBIN_SER_PLAS	结合珠蛋白（血清/血浆）	
+metric	HEMOGLOBIN_S_HEMOGLOBIN_TOTAL_BLD	血红蛋白 S 占总血红蛋白比例（全血）	
+metric	MYELOPEROXIDASE_AB_SER	抗髓过氧化物酶抗体（血清）	
+metric	PROTEINASE_3_AB_SER	抗蛋白酶 3 抗体（血清）	
+metric	HEMOGLOBIN_FREE_SER	游离血红蛋白（血清）	
+metric	FIBRIN_D_DIMER_PPP	D-二聚体（乏血小板血浆）	
+metric	ACTIVATED_CLOTTING_TIME_PPP	活化凝血时间（乏血小板血浆）	
+metric	HIV_1_O_2_AB_SER_PLAS	HIV-1/O/2 型抗体（血清/血浆）	
+metric	COAGULATION_BLDCRRT	活化部分凝血活酶时间（APTT）（持续肾脏替代治疗回路血）	
+metric	EVEROLIMUS_BLD	依维莫司（全血）	
+metric	BORRELIA_BURGDORFERI_AB_IGG_SER	伯氏疏螺旋体抗体 IgG（血清）	
+metric	CORYNEBACTERIUM_DIPHTHERIAE_AB_SER	白喉棒状杆菌抗体（血清）	
+metric	CYTOMEGALOVIRUS_AB_IGG_SER_PLAS	巨细胞病毒抗体 IgG（血清/血浆）	
+metric	DNA_DOUBLE_STRAND_AB_SER	抗双链 DNA 抗体（血清）	
+metric	EPSTEIN_BARR_VIRUS_CAPSID_AB_IGG_SER	EB 病毒衣壳抗原抗体 IgG（血清）	
+metric	CHROMATIN_AB_SER_PLAS	抗染色质抗体（血清/血浆）	
+metric	7_AMINOCLONAZEPAM_URINE	7-氨基氯硝西泮（尿，确认检测）	
+metric	HEPATITIS_B_VIRUS_LITTLE_E_AG_SER	乙型肝炎 e 抗原（HBeAg）（血清）	
+metric	RIBONUCLEOPROTEIN_EXTRACTABLE_NUCLEAR_AB_SER	抗 RNP 抗体（ENA）（血清）	
+metric	HEPATITIS_B_VIRUS_SURFACE_AB_SER_PLAS	乙型肝炎表面抗体（抗-HBs）（血清/血浆）	
+metric	HERPES_VIRUS_6_AB_IGG_SER	人类疱疹病毒 6 型抗体 IgG（血清）	
+metric	PARVOVIRUS_B19_AB_IGG_SER	细小病毒 B19 抗体 IgG（血清）	
+metric	PARVOVIRUS_B19_AB_IGM_SER	细小病毒 B19 抗体 IgM（血清）	
+metric	RUBELLA_VIRUS_AB_IGG_SER_PLAS	风疹病毒抗体 IgG（血清/血浆）	
+metric	STREPTOLYSIN_O_AB_SER_PLAS	抗链球菌溶血素 O（ASO）（血清/血浆）	
+metric	COCAINE_METABOLITES_OTHER_URINE	可卡因其他代谢物（尿）	
+metric	CASEIN_AB_IGG_SER	酪蛋白特异性 IgG 抗体（血清）	
+metric	TOXOPLASMA_GONDII_AB_IGG_SER_PLAS	弓形虫抗体 IgG（血清/血浆）	
+metric	CHORIOGONADOTROPIN_TUMOR_MARKER_SER_PLAS	人绒毛膜促性腺激素（肿瘤标志物）（血清/血浆）	
+metric	VARICELLA_ZOSTER_VIRUS_AB_IGG_SER	水痘-带状疱疹病毒抗体 IgG（血清）	
+metric	ACETONE_SER_PLAS	丙酮（血清/血浆）	
+metric	ALUMINUM_SER_PLAS	铝（血清/血浆）	
+metric	ARSENIC_BLD	砷（全血）	
+metric	CADMIUM_BLD	镉（全血）	
+metric	CHROMIUM_BLD	铬（全血）	
+metric	CHROMIUM_SER_PLAS	铬（血清/血浆）	
+metric	COW_MILK_AB_IGG4_SER	牛奶特异性 IgG4 抗体（血清）	
+metric	COBALT_BLD	钴（全血）	
+metric	COBALT_SER_PLAS	钴（血清/血浆）	
+metric	COPPER_SER_PLAS	铜（血清/血浆）	
+metric	ETHANOL_BLD	乙醇（全血）	
+metric	ETHANOL_SER_PLAS	乙醇（血清/血浆）	
+metric	ETHANOL_URINE	乙醇（尿）	
+metric	ETHYLENE_GLYCOL_SER_PLAS_BLD	乙二醇（血清/血浆/全血）	
+metric	TISSUE_TRANSGLUTAMINASE_AB_IGG_SER	组织转谷氨酰胺酶抗体 IgG（血清）	
+metric	EPSTEIN_BARR_VIRUS_EARLY_AB_IGM_SER	EB 病毒早期抗原抗体 IgM（血清）	
+metric	ISOPROPANOL_SER_PLAS	异丙醇（血清/血浆）	
+metric	MERCURY_BLD	汞（全血）	
+metric	METHANOL_SER_PLAS	甲醇（血清/血浆）	
+metric	CYCLIC_CITRULLINATED_PEPTIDE_AB_IGA_IGG_SER_PLAS	抗环瓜氨酸肽抗体 IgA 与 IgG 合计（血清/血浆）	
+metric	POLYCHLORINATED_BIPHENYL_SER_PLAS	多氯联苯（血清/血浆）	
+metric	SELENIUM_SER_PLAS	硒（血清/血浆）	
+metric	THYROTROPIN_RECEPTOR_AB_SER	促甲状腺激素受体抗体（血清）	
+metric	ZINC_SER_PLAS	锌（血清/血浆）	
+metric	KETONES_URINE	酮体（尿，试纸法）	
+metric	PROTEIN_S_PPP	蛋白 S（乏血小板血浆）	
+metric	LACOSAMIDE_SER_PLAS	拉考沙胺（血清/血浆）	
+metric	PROTEIN_C_PPP	蛋白 C（乏血小板血浆）	
+metric	PROTEIN_C_AG_PPP	蛋白 C 抗原（乏血小板血浆）	
+metric	VON_WILLEBRAND_FACTOR_AG_PPP	血管性血友病因子抗原（乏血小板血浆）	
+metric	PRUNUS_DULCIS_AB_IGE_SER	杏仁特异性 IgE 抗体（血清）	
+metric	ALTERNARIA_ALTERNATA_AB_IGE_SER	链格孢霉特异性 IgE 抗体（血清）	
+metric	MALUS_SYLVESTRIS_AB_IGE_SER	苹果特异性 IgE 抗体（血清）	
+metric	ASPERGILLUS_FUMIGATUS_AB_IGE_SER	烟曲霉特异性 IgE 抗体（血清）	
+metric	AUREOBASIDIUM_PULLULANS_AB_IGE_SER	出芽短梗霉特异性 IgE 抗体（血清）	
+metric	PASPALUM_NOTATUM_AB_IGE_SER	巴哈雀稗特异性 IgE 抗体（血清）	
+metric	MUSA_SPP_AB_IGE_SER	香蕉特异性 IgE 抗体（血清）	
+metric	HORDEUM_VULGARE_AB_IGE_SER	大麦特异性 IgE 抗体（血清）	
+metric	FAGUS_GRANDIFOLIA_AB_IGE_SER	美洲山毛榉特异性 IgE 抗体（血清）	
+metric	BEEF_AB_IGE_SER	牛肉特异性 IgE 抗体（血清）	
+metric	CYNODON_DACTYLON_AB_IGE_SER	狗牙根草特异性 IgE 抗体（血清）	
+metric	BERTHOLLETIA_EXCELSA_AB_IGE_SER	巴西坚果特异性 IgE 抗体（血清）	
+metric	CANDIDA_ALBICANS_AB_IGE_SER	白色念珠菌特异性 IgE 抗体（血清）	
+metric	DAUCUS_CAROTA_AB_IGE_SER	胡萝卜特异性 IgE 抗体（血清）	
+metric	CASEIN_AB_IGE_SER	酪蛋白特异性 IgE 抗体（血清）	
+metric	ACREMONIUM_SP_AB_IGE_SER	枝顶孢霉特异性 IgE 抗体（血清）	
+metric	CHICKEN_FEATHER_AB_IGE_SER	鸡毛特异性 IgE 抗体（血清）	
+metric	CHICKEN_MEAT_AB_IGE_SER	鸡肉特异性 IgE 抗体（血清）	
+metric	CHOCOLATE_AB_IGE_SER	巧克力特异性 IgE 抗体（血清）	
+metric	CLADOSPORIUM_HERBARUM_AB_IGE_SER	草本枝孢霉特异性 IgE 抗体（血清）	
+metric	RUDITAPES_SPP_AB_IGE_SER	蛤蜊特异性 IgE 抗体（血清）	
+metric	BLATELLA_GERMANICA_AB_IGE_SER	德国小蠊（蟑螂）特异性 IgE 抗体（血清）	
+metric	COCOS_NUCIFERA_AB_IGE_SER	椰子特异性 IgE 抗体（血清）	
+metric	GADUS_MORHUA_AB_IGE_SER	鳕鱼特异性 IgE 抗体（血清）	
+metric	AMBROSIA_ELATIOR_AB_IGE_SER	普通豚草特异性 IgE 抗体（血清）	
+metric	ZEA_MAYS_AB_IGE_SER	玉米特异性 IgE 抗体（血清）	
+metric	POPULUS_DELTOIDES_AB_IGE_SER	三角叶杨特异性 IgE 抗体（血清）	
+metric	CANCER_PAGURUS_AB_IGE_SER	黄道蟹特异性 IgE 抗体（血清）	
+metric	DERMATOPHAGOIDES_FARINAE_AB_IGE_SER	粉尘螨特异性 IgE 抗体（血清）	
+metric	DERMATOPHAGOIDES_PTERONYSSINUS_AB_IGE_SER	屋尘螨特异性 IgE 抗体（血清）	
+metric	DOG_DANDER_AB_IGE_SER	狗皮屑特异性 IgE 抗体（血清）	
+metric	DOG_EPITHELIUM_AB_IGE_SER	狗上皮特异性 IgE 抗体（血清）	
+metric	EGG_WHITE_AB_IGE_SER	蛋清特异性 IgE 抗体（血清）	
+metric	EGG_YOLK_AB_IGE_SER	蛋黄特异性 IgE 抗体（血清）	
+metric	ULMUS_AMERICANA_AB_IGE_SER	美洲榆特异性 IgE 抗体（血清）	
+metric	PLANTAGO_LANCEOLATA_AB_IGE_SER	长叶车前特异性 IgE 抗体（血清）	
+metric	EUCALYPTUS_SPP_AB_IGE_SER	桉树特异性 IgE 抗体（血清）	
+metric	FUSARIUM_MONILIFORME_AB_IGE_SER	串珠镰刀菌特异性 IgE 抗体（血清）	
+metric	GLUTEN_AB_IGE_SER	麸质特异性 IgE 抗体（血清）	
+metric	GOOSE_FEATHER_AB_IGE_SER	鹅毛特异性 IgE 抗体（血清）	
+metric	CORYLUS_AVELLANA_AB_IGE_SER	榛子特异性 IgE 抗体（血清）	
+metric	CORYLUS_AVELLANA_POLLEN_AB_IGE_SER	榛树花粉特异性 IgE 抗体（血清）	
+metric	SETOMELANOMMA_ROSTRATA_AB_IGE_SER	喙状刚毛球腔菌特异性 IgE 抗体（血清）	
+metric	AQUAPORIN_4_WATER_CHANNEL_AB_SER_PLAS	水通道蛋白 4 抗体（血清/血浆）	
+metric	HORSE_DANDER_AB_IGE_SER	马皮屑特异性 IgE 抗体（血清）	
+metric	CUPRESSUS_SEMPERVIRENS_AB_IGE_SER	地中海柏木特异性 IgE 抗体（血清）	
+metric	SORGHUM_HALEPENSE_AB_IGE_SER	约翰逊草特异性 IgE 抗体（血清）	
+metric	POA_PRATENSIS_AB_IGE_SER	草地早熟禾特异性 IgE 抗体（血清）	
+metric	CHENOPODIUM_ALBUM_AB_IGE_SER	藜（灰菜）特异性 IgE 抗体（血清）	
+metric	LATEX_AB_IGE_SER	乳胶特异性 IgE 抗体（血清）	
+metric	QUERCUS_VIRGINIANA_AB_IGE_SER	弗吉尼亚栎特异性 IgE 抗体（血清）	
+metric	HOMARUS_GAMMARUS_AB_IGE_SER	龙虾特异性 IgE 抗体（血清）	
+metric	MILK_AB_IGE_SER	牛奶特异性 IgE 抗体（Milk）（血清）	
+metric	JUNIPERUS_SABINOIDES_AB_IGE_SER	山桧特异性 IgE 抗体（血清）	
+metric	MUCOR_RACEMOSUS_AB_IGE_SER	总状毛霉特异性 IgE 抗体（血清）	
+metric	ARTEMISIA_VULGARIS_AB_IGE_SER	艾蒿特异性 IgE 抗体（血清）	
+metric	URTICA_DIOICA_AB_IGE_SER	荨麻特异性 IgE 抗体（血清）	
+metric	QUERCUS_ALBA_AB_IGE_SER	白栎特异性 IgE 抗体（血清）	
+metric	AVENA_SATIVA_AB_IGE_SER	燕麦特异性 IgE 抗体（血清）	
+metric	CITRUS_SINENSIS_AB_IGE_SER	橙子特异性 IgE 抗体（血清）	
+metric	DACTYLIS_GLOMERATA_AB_IGE_SER	鸭茅特异性 IgE 抗体（血清）	
+metric	PISUM_SATIVUM_AB_IGE_SER	豌豆特异性 IgE 抗体（血清）	
+metric	ARACHIS_HYPOGAEA_AB_IGE_SER	花生特异性 IgE 抗体（血清）	
+metric	CARYA_ILLINOINENSIS_NUT_AB_IGE_SER	美国山核桃（果实）特异性 IgE 抗体（血清）	
+metric	CARYA_ILLINOINENSIS_TREE_AB_IGE_SER	美国山核桃（树）特异性 IgE 抗体（血清）	
+metric	PENICILLIUM_NOTATUM_AB_IGE_SER	点青霉特异性 IgE 抗体（血清）	
+metric	PORK_AB_IGE_SER	猪肉特异性 IgE 抗体（血清）	
+metric	SOLANUM_TUBEROSUM_AB_IGE_SER	土豆特异性 IgE 抗体（血清）	
+metric	SYAGRUS_ROMANZOFFIANUM_AB_IGE_SER	金山葵特异性 IgE 抗体（血清）	
+metric	ORYZA_SATIVA_AB_IGE_SER	大米特异性 IgE 抗体（血清）	
+metric	IVA_CILIATA_AB_IGE_SER	假苍耳（粗糙沼泽菊）特异性 IgE 抗体（血清）	
+metric	SALSOLA_KALI_AB_IGE_SER	猪毛菜特异性 IgE 抗体（血清）	
+metric	SALMO_SALAR_AB_IGE_SER	三文鱼特异性 IgE 抗体（血清）	
+metric	ATRIPLEX_LENTIFORMIS_AB_IGE_SER	透镜滨藜特异性 IgE 抗体（血清）	
+metric	SESAMUM_INDICUM_AB_IGE_SER	芝麻特异性 IgE 抗体（血清）	
+metric	RUMEX_ACETOSELLA_AB_IGE_SER	小酸模特异性 IgE 抗体（血清）	
+metric	PANDALUS_BOREALIS_AB_IGE_SER	虾特异性 IgE 抗体（血清）	
+metric	GLYCINE_MAX_AB_IGE_SER	大豆特异性 IgE 抗体（血清）	
+metric	STEMPHYLIUM_BOTRYOSUM_AB_IGE_SER	葡萄孢叶枯霉特异性 IgE 抗体（血清）	
+metric	FRAGARIA_VESCA_AB_IGE_SER	草莓特异性 IgE 抗体（血清）	
+metric	PLATANUS_OCCIDENTALIS_AB_IGE_SER	美国梧桐特异性 IgE 抗体（血清）	
+metric	PHLEUM_PRATENSE_AB_IGE_SER	猫尾草特异性 IgE 抗体（血清）	
+metric	LYCOPERSICON_LYCOPERSICUM_AB_IGE_SER	番茄特异性 IgE 抗体（血清）	
+metric	THUNNUS_ALBACARES_AB_IGE_SER	金枪鱼特异性 IgE 抗体（血清）	
+metric	JUGLANS_SPP_AB_IGE_SER	核桃特异性 IgE 抗体（血清）	
+metric	JUGLANS_CALIFORNIA_AB_IGE_SER	加州核桃特异性 IgE 抗体（血清）	
+metric	TRITICUM_AESTIVUM_AB_IGE_SER	小麦特异性 IgE 抗体（血清）	
+metric	FRAXINUS_AMERICANA_AB_IGE_SER	美国白蜡树特异性 IgE 抗体（血清）	
+metric	MORUS_ALBA_AB_IGE_SER	白桑特异性 IgE 抗体（血清）	
+metric	PINUS_STROBUS_AB_IGE_SER	东部白松特异性 IgE 抗体（血清）	
+metric	ARTEMISIA_ABSINTHIUM_AB_IGE_SER	苦艾特异性 IgE 抗体（血清）	
+metric	SACCHAROMYCES_CEREVISIAE_AB_IGE_SER	酿酒酵母特异性 IgE 抗体（血清）	
+metric	GLUTEN_AB_IGG_SER	麸质特异性 IgG 抗体（血清）	
+metric	BORRELIA_BURGDORFERI_AB_CSF	伯氏疏螺旋体抗体（脑脊液）	
+metric	ANACARDIUM_OCCIDENTALE_AB_IGE_SER	腰果特异性 IgE 抗体（血清）	
+metric	CAT_DANDER_AB_IGE_SER	猫皮屑特异性 IgE 抗体（血清）	
+metric	APIS_MELLIFERA_AB_IGE_SER	蜜蜂特异性 IgE 抗体（血清）	
+metric	PENICILLIN_G_AB_IGE_SER	青霉素 G 特异性 IgE 抗体（血清）	
+metric	CLOZAPINE_SER_PLAS	氯氮平（血清/血浆）	
+metric	INSULIN_FREE_SER_PLAS	游离胰岛素（血清/血浆）	
+metric	LAMOTRIGINE_SER_PLAS	拉莫三嗪（血清/血浆）	
+metric	BACCHARIS_SPP_AB_IGE_SER	酒神菊特异性 IgE 抗体（血清）	
+metric	MYRICA_SPP_POLLEN_AB_IGE_SER	杨梅花粉特异性 IgE 抗体（血清）	
+metric	ACER_NEGUNDO_AB_IGE_SER	梣叶槭特异性 IgE 抗体（血清）	
+metric	HEMOGLOBIN_BLD	血红蛋白（全血）	
+metric	HEMOGLOBIN_FREE_PLAS	游离血红蛋白（血浆）	
+metric	COW_MILK_AB_IGE_SER	牛乳特异性 IgE 抗体（Cow milk）（血清）	
+metric	ANTHEMIS_COTULA_AB_IGE_SER	臭春黄菊特异性 IgE 抗体（血清）	
+metric	EGG_WHOLE_AB_IGE_SER	全蛋特异性 IgE 抗体（血清）	
+metric	LOLIUM_PERENNE_AB_IGE_SER	多年生黑麦草特异性 IgE 抗体（血清）	
+metric	CARYA_TOMENTOSA_AB_IGE_SER	白山核桃特异性 IgE 抗体（血清）	
+metric	CLADOSPORIUM_SPHAEROSPERMUM_AB_IGE_SER	球孢枝孢霉特异性 IgE 抗体（血清）	
+metric	LACTALBUMIN_ALPHA_AB_IGE_SER	α-乳白蛋白特异性 IgE 抗体（血清）	
+metric	MANGIFERA_INDICA_POLLEN_AB_IGE_SER	芒果花粉特异性 IgE 抗体（血清）	
+metric	OSTREA_EDULIS_AB_IGE_SER	牡蛎特异性 IgE 抗体（血清）	
+metric	AMARANTHUS_RETROFLEXUS_AB_IGE_SER	反枝苋特异性 IgE 抗体（血清）	
+metric	PISTACIA_VERA_AB_IGE_SER	开心果特异性 IgE 抗体（血清）	
+metric	LIGUSTRUM_VULGARE_AB_IGE_SER	欧洲女贞特异性 IgE 抗体（血清）	
+metric	PECTEN_SPP_AB_IGE_SER	扇贝特异性 IgE 抗体（血清）	
+metric	COW_WHEY_AB_IGE_SER	牛乳清蛋白特异性 IgE 抗体（血清）	
+metric	EPSTEIN_BARR_VIRUS_CAPSID_AB_IGM_SER	EB 病毒衣壳抗原抗体 IgM（血清）	
+metric	GLIADIN_AB_SER	麦胶蛋白抗体（血清）	
+metric	ERYTHROCYTES_BLD	红细胞计数（全血）	
+metric	HELICOBACTER_PYLORI_AB_IGA_SER	幽门螺杆菌抗体 IgA（血清）	
+metric	HELICOBACTER_PYLORI_AB_IGG_SER	幽门螺杆菌抗体 IgG（血清）	
+metric	RUBELLA_VIRUS_AB_IGG_SER	风疹病毒抗体 IgG（血清）	
+metric	TOXOPLASMA_GONDII_AB_IGG_SER	弓形虫抗体 IgG（血清）	
+metric	TOXOPLASMA_GONDII_AB_IGM_SER	弓形虫抗体 IgM（血清）	
+metric	CENTROMERE_AB_SER	抗着丝点抗体（血清）	
+metric	INSULIN_AB_SER	胰岛素抗体（血清）	
+metric	THYROGLOBULIN_AB_SER_PLAS	甲状腺球蛋白抗体（血清/血浆）	
+metric	THYROPEROXIDASE_AB_SER_PLAS	甲状腺过氧化物酶抗体（血清/血浆）	
+metric	AMPHETAMINES_URINE	安非他明类（尿）	
+metric	OPIATES_URINE	阿片类（尿）	
+metric	BARBITURATES_URINE	巴比妥类（尿）	
+metric	BENZODIAZEPINES_URINE	苯二氮䓬类（尿）	
+metric	ENTAMOEBA_HISTOLYTICA_AB_IGG_SER	溶组织内阿米巴抗体 IgG（血清）	
+metric	PHYTONADIONE_SER_PLAS	植物甲萘醌（维生素 K1）（血清/血浆）	
+metric	GABAPENTIN_SER_PLAS_BLD	加巴喷丁（血清/血浆/全血）	
+metric	HOUSE_DUST_GREER_AB_IGE_SER	屋尘（Greer）特异性 IgE 抗体（血清）	

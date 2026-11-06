@@ -38,6 +38,7 @@ REQUIRED = {
     # table are read at import time by `mirobody.kernel.metrics` / `mirobody.kernel.meds`.
     "mirobody/res/catalog/metrics.tsv": 40_000,
     "mirobody/res/catalog/labels/zh.tsv": 10_000,
+    "mirobody/res/catalog/labels/zh-auto.tsv": 20_000,
     "mirobody/res/dose_forms.tsv": 300,
     # UCUM, verbatim: the License requires the whole file, its notice and the
     # licence text to travel together (`res/ucum/ucum-essence.NOTICE`).

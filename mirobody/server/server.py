@@ -510,6 +510,7 @@ class Server:
             data_export_router,
             setup_router,
         )
+        from mirobody.server.routers.user_erase_router import router as user_erase_router
         app.include_router(pulse_public_router)
         # apple_router is ALSO nested inside pulse_public_router (routers/__init__),
         # so Apple Health uploads answer on both /apple/* and /api/v1/pulse/apple/*.
@@ -533,6 +534,7 @@ class Server:
         app.include_router(genomics_router)
         app.include_router(medication_router)
         app.include_router(data_export_router)
+        app.include_router(user_erase_router)
         app.include_router(setup_router)
 
         hub = config.get_hub_options()

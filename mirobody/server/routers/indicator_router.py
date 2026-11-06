@@ -35,10 +35,18 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from mirobody.collect import RECORD_EXPORT_COLUMNS, RECORDS_PAGE_MAX, REST_CATALOG_MAX, REST_ROW_MAX, PostgresHealthQuery
+from mirobody.collect import (
+    RECORD_EXPORT_COLUMNS,
+    RECORDS_PAGE_MAX,
+    REST_CATALOG_MAX,
+    REST_ROW_MAX,
+    TIMELINE_PAGE_MAX,
+    PostgresHealthQuery,
+)
 from mirobody.agent.tools._render import render_rest
 from mirobody.agent.tools.health_indicators_service import HealthIndicatorsService
 from mirobody.server.auth import subject_for, verify_token
+from mirobody.kernel import metrics as catalog
 from mirobody.kernel.ops import is_driver_exception
 from mirobody.server.envelope import ErrorResponse, StandardResponse, failed
 
@@ -62,6 +70,10 @@ _records = PostgresHealthQuery(reported=True)
 #: The most rows one export carries. Past it the export says it was cut short
 #: rather than hold an unbounded account in memory.
 EXPORT_MAX = 100_000
+
+#: The longest span one timeline request may cover: a device's daily summaries are grouped over the
+#: whole span before a page is cut, so an unbounded span would cost the same on every page.
+TIMELINE_MAX_DAYS = 400
 
 
 
@@ -182,6 +194,43 @@ async def health_indicator_records(
         return ErrorResponse(code=400, msg=str(exc))
     except Exception as exc:
         return failed("health records", exc, "This query could not complete.")
+    return StandardResponse(data=data)
+
+
+@router.get("/health-indicators/catalog")
+async def search_catalog(
+    q: str = Query(..., min_length=1, max_length=100, description="Chinese or English name, LOINC code or category"),
+    limit: int = Query(20, ge=1, le=50),
+    user_id: str = Depends(verify_token),
+):
+    """Search the metrics a reading can be recorded as (those with a standard code), best match first. This is the
+    catalogue, not the person's record: it names nothing about them."""
+    return StandardResponse(data={"rows": catalog.search(q, limit)})
+
+
+@router.get("/health-indicators/timeline")
+async def health_indicator_timeline(
+    start_time: str = Query(..., description="First local day, YYYY-MM-DD"),
+    end_time: str = Query(..., description="Last local day, YYYY-MM-DD"),
+    limit: int = Query(100, ge=1, le=TIMELINE_PAGE_MAX),
+    cursor: str | None = Query(None, description="`next_cursor` of the previous page"),
+    target_user_id: str | None = Query(None),
+    user_id: str = Depends(verify_token),
+):
+    """One page of the chronological list: readings coded to a standard code, newest local day first. A device's
+    readings are one `day` entry per metric, day and source (n, avg, min, max, newest value)."""
+    owner = await subject_for(user_id, target_user_id)
+    if owner is None:
+        return _denied()
+    try:
+        start, end = _date(start_time, "start_time"), _date(end_time, "end_time")
+        if start is None or end is None or end < start or (end - start).days > TIMELINE_MAX_DAYS:
+            raise ValueError(f"start_time..end_time must be a range of at most {TIMELINE_MAX_DAYS} days")
+        data = await _records.timeline(owner, start=start, end=end, limit=limit, cursor=cursor)
+    except ValueError as exc:
+        return ErrorResponse(code=400, msg=str(exc))
+    except Exception as exc:
+        return failed("health timeline", exc, "This query could not complete.")
     return StandardResponse(data=data)
 
 

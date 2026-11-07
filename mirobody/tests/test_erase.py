@@ -33,7 +33,9 @@ def test_children_are_deleted_before_their_parents():
     order = [t for s in erase.PLAN for t in s.tables]
     assert order.index("th_observation") < order.index("th_extraction")
     assert order.index("care_circle_members") < order.index("care_circles")
-    assert order.index("th_messages") < order.index("th_sessions")
+    # chat sessions/messages, files and genotype sets are deleted with RETURNING inside _erase_rows, not by a plan step
+    assert not {"th_messages", "th_sessions", "th_files", "th_genotype_set"} & set(order)
+    assert "th_files" in erase.TABLES and "th_sessions" in erase.TABLES
 
 
 def test_the_account_is_closed_and_scrubbed_by_the_same_transaction():

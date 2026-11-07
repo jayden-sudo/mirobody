@@ -4,9 +4,10 @@ Caller only: there is no `target_user_id`, and a care-circle grant, even a
 read-write one, does not reach it. The body must say `"confirm":
 "erase-all-my-data"`, so a stray request cannot do it. What goes, and what
 does not, is written at the top of `user/erase.py`. The account is closed in the
-same transaction, so this token (and every other) stops working the moment it
-returns; a retry that arrives after it gets the standard rejection of a closed
-account, which a client takes as "already erased".
+same transaction: this process refuses its tokens at once, other workers within
+`user._ACTIVE_TTL` (30 s, an account is looked up again after that), and a write
+already past that check can still land under the closed id. A retry that arrives
+later gets the standard rejection of a closed account.
 """
 
 from __future__ import annotations

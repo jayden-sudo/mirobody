@@ -44,9 +44,12 @@ from __future__ import annotations
 
 import csv
 import io
+import logging
 from dataclasses import dataclass, replace
 from importlib import resources
 from collections.abc import Iterator
+
+logger = logging.getLogger(__name__)
 
 #: Bumps whenever a row's identity fields change (name, unit_ucum, state_class,
 #: aggregation_policy, loinc, window). Consumers that persist standardised
@@ -288,6 +291,16 @@ def load_labels_resource(locale: str) -> None:
 _zh_by_loinc: dict[str, tuple[str, bool]] | None = None
 
 
+def _label_file(name: str) -> dict[str, str]:
+    """A label file as {member: label}. A file that is not there (a fork or an install without the machine-translated
+    names) means no names from it, not an error in every catalogue, search and timeline read."""
+    try:
+        return {r["key"]: r["label"] for r in _read_tsv(name) if r.get("label")}
+    except (FileNotFoundError, OSError) as e:
+        logger.warning("label file %s could not be read, its names are left out: error_type=%s", name, type(e).__name__)
+        return {}
+
+
 def zh_for_loinc(code: str) -> tuple[str, bool] | None:
     """The Simplified-Chinese name of a LOINC code and whether it is a machine translation, or None.
 
@@ -296,8 +309,8 @@ def zh_for_loinc(code: str) -> tuple[str, bool] | None:
     catalogue order that has a hand-written name wins, else the first with a machine name."""
     global _zh_by_loinc
     if _zh_by_loinc is None:
-        curated = {r["key"]: r["label"] for r in _read_tsv("catalog/labels/zh.tsv") if r.get("label")}
-        auto = {r["key"]: r["label"] for r in _read_tsv("catalog/labels/zh-auto.tsv") if r.get("label")}
+        curated = _label_file("catalog/labels/zh.tsv")
+        auto = _label_file("catalog/labels/zh-auto.tsv")
         table: dict[str, tuple[str, bool]] = {}
         for m in ROWS:
             if not m.loinc or m.confidence not in ("confident", "unverified"):

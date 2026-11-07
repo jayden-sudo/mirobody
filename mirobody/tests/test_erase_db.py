@@ -56,6 +56,11 @@ async def world(monkeypatch):
         monkeypatch.setattr(db, "_provider", lambda _: engine)
         monkeypatch.setattr(db, "_engines", {})
 
+        from mirobody.user import user as account
+
+        account._closed.clear()
+        account._active.clear()
+
         class W:
             pass
 
@@ -110,6 +115,10 @@ async def world(monkeypatch):
         w.seed, w.user, w.count = seed, user, count
         yield w
     finally:
+        from mirobody.user import user as account
+
+        account._closed.clear()
+        account._active.clear()
         if engine is not None:
             await engine.dispose()
         await admin.execute(sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(sql.Identifier(schema)))
@@ -269,3 +278,115 @@ async def test_the_next_sign_in_of_the_same_identity_gets_a_new_empty_account(wo
     await erase.erase_user_data(str(a))
     new = await account.ensure_sibian_user("did:x", "Ada", "iss")
     assert new is not None and new.user_id != a and new.is_new
+
+
+async def test_an_extraction_another_person_also_uses_does_not_block_the_erasure(world):
+    from mirobody.user import erase
+
+    a, b = await world.user("a@x.test"), await world.user("b@x.test")
+    A, B = str(a), str(b)
+    await world.seed("th_extraction", user_id=A, source_ref="shared-batch", source_kind="manual", extractor="manual", status="ok", digest="same")
+    await world.seed("th_extraction", user_id=A, source_ref="only-mine", source_kind="manual", extractor="manual", status="ok", digest="mine")
+    shared = (await world.q("SELECT id FROM th_extraction WHERE source_ref = 'shared-batch'", log_sql=False))[0]["id"]
+    kw = {"kind": "measurement", "modality": "manual", "source_kind": "manual", "tz": "UTC", "tz_source": "iana", "grain": "instant", "value_kind": "narrative"}
+    await world.seed("th_observation", user_id=A, extraction_id=shared, **kw)
+    await world.seed("th_observation", user_id=B, extraction_id=shared, **kw)   # B ingested the same batch: the same row
+    out = await erase.erase_user_data(A)                                         # used to abort on the foreign key
+    assert await world.count("th_observation", "user_id = :u", u=B) == 1
+    assert await world.count("th_observation", "user_id = :u", u=A) == 0
+    assert await world.count("th_extraction", "source_ref = 'shared-batch'") == 1        # B still points at it
+    assert await world.count("th_extraction", "source_ref = 'only-mine'") == 0
+    assert out["erased"]["records"] >= 2
+
+
+async def test_conversation_copies_are_deleted_by_thread_id_even_with_no_saver(world, monkeypatch):
+    from mirobody.user import erase
+
+    for table in ("checkpoints", "checkpoint_blobs", "checkpoint_writes"):
+        await world.admin.execute(f"CREATE TABLE {table} (thread_id text NOT NULL, note text)")
+    a, b = await world.user("a@x.test"), await world.user("b@x.test")
+    A, B = str(a), str(b)
+    await world.seed("th_sessions", session_id="s-aa", user_id=A, query_user_id=A)
+    await world.seed("th_sessions", session_id="s-ba", user_id=B, query_user_id=A)      # B asked about A
+    await world.seed("th_sessions", session_id="s-bb", user_id=B, query_user_id=B)
+    for thread in (f"{A}:s-aa", f"{B}:s-ba", f"{A}:never-saved-a-session-row", f"{B}:s-bb"):
+        for table in ("checkpoints", "checkpoint_blobs", "checkpoint_writes"):
+            await world.admin.execute(f"INSERT INTO {table} (thread_id) VALUES ('{thread}')")
+
+    async def no_saver(thread):                    # delete_thread swallows everything and does nothing without a saver
+        return None
+
+    monkeypatch.setattr("mirobody.agent.checkpointer.delete_thread", no_saver)
+    out = await erase.erase_user_data(A)
+    left = {r["thread_id"] for r in await world.q("SELECT thread_id FROM checkpoints", log_sql=False)}
+    assert left == {f"{B}:s-bb"}
+    for table in ("checkpoint_blobs", "checkpoint_writes"):
+        assert {r["thread_id"] for r in await world.q(f"SELECT thread_id FROM {table}", log_sql=False)} == {f"{B}:s-bb"}
+    assert out["threads_failed"] == 0
+
+
+async def test_a_deployment_without_the_purge_table_still_deletes_the_objects(world):
+    from mirobody.user import erase
+
+    await world.admin.execute("DROP TABLE th_storage_purge")
+    a = await world.user("a@x.test")
+    await world.seed("th_files", user_id=str(a), file_key="a/own.pdf")
+    out = await erase.erase_user_data(str(a))
+    assert world.deleted_keys == ["a/own.pdf"]                    # not orphaned, though not retryable
+    assert out["objects_pending"] == 0
+
+
+async def test_failed_objects_are_retried_least_failed_first(world):
+    from mirobody.user import erase
+
+    for i in range(erase.RETRY_BATCH + 5):                         # keys that can never be deleted, many times over
+        await world.seed("th_storage_purge", file_key=f"stuck/{i}", attempts=50)
+    await world.seed("th_storage_purge", file_key="fresh/leftover", attempts=0)
+    world.fail_keys.update(f"stuck/{i}" for i in range(erase.RETRY_BATCH + 5))
+    a = await world.user("a@x.test")
+    await erase.erase_user_data(str(a))
+    assert "fresh/leftover" in world.deleted_keys                  # not starved by the stuck ones
+
+
+async def test_a_queued_object_someone_started_using_since_is_dropped_from_the_queue_not_deleted(world):
+    from mirobody.user import erase
+
+    a, b = await world.user("a@x.test"), await world.user("b@x.test")
+    await world.seed("th_storage_purge", file_key="queued/shared.pdf")
+    await world.seed("th_storage_purge", file_key="queued/free.pdf")
+    await world.seed("th_files", user_id=str(b), file_key="queued/shared.pdf")     # B's file row names it now
+    await erase.erase_user_data(str(a))
+    assert "queued/shared.pdf" not in world.deleted_keys                           # B's file is still there
+    assert "queued/free.pdf" in world.deleted_keys
+    assert await world.count("th_storage_purge") == 0                              # off the queue either way
+
+
+async def test_a_key_from_this_very_erasure_that_someone_names_before_the_purge_runs_is_kept(world):
+    from mirobody.user import erase
+
+    b = await world.user("b@x.test")
+    await world.seed("th_storage_purge", file_key="just/queued.pdf")             # queued by the transaction that just committed
+    await world.seed("th_files", user_id=str(b), file_key="just/queued.pdf")     # and a new row names it before the purge runs
+    await erase._purge_objects(["just/queued.pdf"])
+    assert "just/queued.pdf" not in world.deleted_keys
+    assert await world.count("th_storage_purge") == 0
+
+
+async def test_when_sharing_cannot_be_checked_nothing_is_deleted_and_the_keys_stay_queued(world, monkeypatch):
+    from mirobody.user import erase
+    from mirobody.utils import db
+
+    await world.seed("th_storage_purge", file_key="queued/a.pdf")
+    real = db.execute_query
+
+    async def flaky(query, params=None, *a, **kw):
+        if "FROM th_files WHERE file_key" in query:
+            raise TimeoutError("connection dropped")
+        return await real(query, params, *a, **kw)
+
+    monkeypatch.setattr(db, "execute_query", flaky)
+    pending = await erase._purge_objects(["queued/a.pdf"])
+    assert pending == -1                                      # "could not check" is not "not shared"
+    assert world.deleted_keys == []
+    monkeypatch.setattr(db, "execute_query", real)
+    assert await world.count("th_storage_purge") == 1         # still queued: the next erasure retries it

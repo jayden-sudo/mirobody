@@ -36,6 +36,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import time
 from dataclasses import dataclass, field
 from functools import lru_cache
 from datetime import date, datetime
@@ -601,17 +602,24 @@ async def _write_concept(tx: db.Transaction, coding: standardize.Coding) -> None
 
 
 _range_rules: standardize.ValueRangeValidator | None = None
+#: When a validator that loaded NO rules (the database was down, or there are none) is asked for again.
+_range_rules_retry_at = 0.0
+_RANGE_RETRY = 30.0
 
 
 async def value_ranges() -> standardize.ValueRangeValidator:
     """The ingestion ranges (`indicator_valid_rules`), loaded once per
     process and shared by every writer that checks them. A load that fails
-    passes every value."""
-    global _range_rules
-    if _range_rules is None:
+    passes every value, so one that came back empty is not kept for good: a
+    brief outage at the first manual write must not switch the range checks off
+    until the process restarts. It is asked again after `_RANGE_RETRY` seconds."""
+    global _range_rules, _range_rules_retry_at
+    now = time.monotonic()
+    if _range_rules is None or (_range_rules_retry_at and now >= _range_rules_retry_at):
         rules = standardize.ValueRangeValidator()
-        await rules.load()
+        loaded = await rules.load()
         _range_rules = rules
+        _range_rules_retry_at = 0.0 if loaded else now + _RANGE_RETRY
     return _range_rules
 
 
